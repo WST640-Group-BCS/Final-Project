@@ -47,7 +47,7 @@ public class test
 			String querystr = args.length > 0 ? args[0] : "teja";
 			
 			//	The \"title\" arg specifies the default field to use when no field is explicitly specified in the query
-			Query q = new QueryParser(Version.LUCENE_44, "title", analyzer).parse(querystr);
+			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
 			
 			// Searching code
 			int hitsPerPage = 10;
