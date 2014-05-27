@@ -147,6 +147,7 @@ public class trec_indexing {
 									
 									
 								}
+								
 								String sub_file_text = builder.toString();
 								
 								
