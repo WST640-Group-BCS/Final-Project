@@ -57,6 +57,8 @@ public class trec_indexing {
 			w.close();
 			
 			String path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";
+			//String path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G";
+
 			int number_of_documents_to_index = 1;
 			indexSpecificNumberOfDocuments(path_to_trec,
 					number_of_documents_to_index);
