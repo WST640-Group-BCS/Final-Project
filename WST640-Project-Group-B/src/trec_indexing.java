@@ -35,31 +35,35 @@ import org.apache.lucene.util.Version;
 import org.xml.sax.InputSource;
 
 public class trec_indexing {
+	
+	private static String OS = System.getProperty("os.name").toLowerCase();
+
 	public static void main(String[] args) {
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
 			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-			String path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";
-			//String path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G";
+			String path_to_trec = "";
+			if (isWindows()) {
+				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
+			} else if (isMac()) {
+				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
+			}
 
 			int number_of_documents_to_index = 1;
 			Directory index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
-
 			// Text to search
 			String querystr = "Christian Slater (William)";
 
 			// field is explicitly specified in the query
-			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer)
-			.parse(querystr);
+			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
 
 			// Searching code
 			int hitsPerPage = 10;
 			IndexReader reader = DirectoryReader.open(index);
 			IndexSearcher searcher = new IndexSearcher(reader);
-			TopScoreDocCollector collector = TopScoreDocCollector.create(
-					hitsPerPage, true);
+			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
 			searcher.search(q, collector);
 			ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
@@ -99,28 +103,34 @@ public class trec_indexing {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48,
-					analyzer);
+			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
 			int counter = 0;
+			
+			String symbol = "";
+			if (isWindows()) {
+				symbol = "\\";	
+			} else if (isMac()) {
+				symbol = "/";	
+			}
+			
 			for (String wtx_folder : wtx_folders) {
 				// excluding the info folder
-				if ((new File(path_to_trec + "\\" + wtx_folder).isDirectory())
-						&& !(new File(path_to_trec + "\\" + wtx_folder).getName()
+				if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())
+						&& !(new File(path_to_trec + symbol + wtx_folder).getName()
 								.equals("info"))) {
 					if (counter < number_of_documents_to_index) {
-						System.out.println(new File(path_to_trec + "\\"
+						System.out.println(new File(path_to_trec + symbol
 								+ wtx_folder).getName());
-						String[] sub_directories = new File(path_to_trec + "\\"
+						String[] sub_directories = new File(path_to_trec + symbol
 								+ wtx_folder).list();
 						for (String sub_directory : sub_directories) {
 							if (counter < number_of_documents_to_index) {
 
 								StringBuilder builder = new StringBuilder();
 
-								File sub_file = new File(path_to_trec + "\\"
-										+ wtx_folder + "\\" + sub_directory);
+								File sub_file = new File(path_to_trec + symbol
+										+ wtx_folder + symbol + sub_directory);
 								System.out.println(sub_file.getAbsolutePath());
 								BufferedReader in;
 								in = new BufferedReader(new InputStreamReader(
@@ -128,8 +138,8 @@ public class trec_indexing {
 												new FileInputStream(sub_file
 														.getAbsolutePath()))));
 								String content;
-								System.out.println(new File(path_to_trec + "\\"
-										+ wtx_folder + "\\" + sub_directory)
+								System.out.println(new File(path_to_trec + symbol
+										+ wtx_folder + symbol + sub_directory)
 								.getName() + ":");
 
 								while ((content = in.readLine()) != null) {
@@ -174,5 +184,17 @@ public class trec_indexing {
 		}
 		return index;
 	}	
+
+	public static boolean isWindows() {
+		 
+		return (OS.indexOf("win") >= 0);
+ 
+	}
+ 
+	public static boolean isMac() {
+ 
+		return (OS.indexOf("mac") >= 0);
+ 
+	}
 
 }
