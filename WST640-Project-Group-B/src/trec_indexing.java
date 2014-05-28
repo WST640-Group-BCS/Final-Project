@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.transform.stream.StreamSource;
@@ -37,16 +39,15 @@ public class trec_indexing {
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
+			
 			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
 
 			// Code to create the index
 			Directory index = new RAMDirectory();
-
+			
 			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48,
 					analyzer);
-
 			
-
 			IndexWriter w = new IndexWriter(index, config);
 			addDoc(w, "Lucene in Action", "193398817");
 			addDoc(w, "Lucene for Dummies", "55320055Z");
@@ -86,7 +87,6 @@ public class trec_indexing {
 				System.out.println((i + 1) + ". " + d.get("isbn") + "\t"
 						+ d.get("title"));
 			}
-
 			// reader can only be closed when there is no need to access the
 			// documents any more
 			reader.close();
@@ -107,12 +107,21 @@ public class trec_indexing {
 
 	public static void indexSpecificNumberOfDocuments(String path_to_trec,
 			int number_of_documents_to_index) {
+		try{
 
 		File file = new File(path_to_trec);
 		String[] wtx_folders = file.list();
+		// Code to create the index
+		// Specify the analyzer for tokenizing text.
+		// The same analyzer should be used for indexing and searching
+		StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+		Directory index = new RAMDirectory();
+		
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48,
+				analyzer);
+		IndexWriter w = new IndexWriter(index, config);
 		int counter = 0;
 		for (String wtx_folder : wtx_folders) {
-			System.out.println("isd");
 			// excluding the info folder
 			if ((new File(path_to_trec + "\\" + wtx_folder).isDirectory())
 					&& !(new File(path_to_trec + "\\" + wtx_folder).getName()
@@ -129,7 +138,7 @@ public class trec_indexing {
 							
 							File sub_file = new File(path_to_trec + "\\"
 									+ wtx_folder + "\\" + sub_directory);
-
+							System.out.println(sub_file.getAbsolutePath());
 							BufferedReader in;
 							try {
 								in = new BufferedReader(new InputStreamReader(
@@ -142,10 +151,7 @@ public class trec_indexing {
 										.getName() + ":");
 								
 								while ((content = in.readLine()) != null) {
-									//System.out.println(content);
 									builder.append(content);
-									
-									
 								}
 								
 								String sub_file_text = builder.toString();
@@ -160,24 +166,23 @@ public class trec_indexing {
 						                "   </item>\n" +
 						                "\n" +
 						                "</channel>";
-								XPathFactory xpf = XPathFactory.newInstance();
-						        XPath xPath = xpf.newXPath();
+								String docno_pattern = "(<DOCNO>(.*?)</DOCNO>)(?<DOC>(.*?)</DOC>)";
+								
+								// Create a Pattern object
+							    Pattern docno_r = Pattern.compile(docno_pattern);
+							    // Now create matcher object.
+							    Matcher docno_m = docno_r.matcher(sub_file_text);
+							    while (docno_m.find()) {
+									String doc_no = docno_m.group(2);
+									String doc_content = docno_m.group(3);
 
-						        InputSource inputSource = new InputSource(new StringReader(sub_file_text));
-						        String result;
-								try {
-									result = (String) xPath.evaluate("//DOC", inputSource, XPathConstants.STRING);
-									System.out.println(result);
-								} catch (XPathExpressionException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-						        
-						        
-								//System.out.println(sub_file_text);
+							    	//System.out.println( doc_no);
+							    	//System.out.println( doc_content);
+									addDoc(w, doc_content, doc_no);
+									
+							    }
 								counter += 1;
 								
-
 							} catch (FileNotFoundException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -192,6 +197,38 @@ public class trec_indexing {
 			}
 
 		}
+		w.close();
+		// Text to search
+					String querystr = "Slater";
 
+					// The \"title\" arg specifies the default field to use when no
+					// field is explicitly specified in the query
+					Query q = new QueryParser(Version.LUCENE_48, "title", analyzer)
+							.parse(querystr);
+
+					// Searching code
+					int hitsPerPage = 10;
+					IndexReader reader = DirectoryReader.open(index);
+					IndexSearcher searcher = new IndexSearcher(reader);
+					TopScoreDocCollector collector = TopScoreDocCollector.create(
+							hitsPerPage, true);
+					searcher.search(q, collector);
+					ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+					// Code to display the results of search
+					System.out.println("Found " + hits.length + " hits.");
+					for (int i = 0; i < hits.length; ++i) {
+						int docId = hits[i].doc;
+						Document d = searcher.doc(docId);
+						System.out.println((i + 1) + ". " + d.get("isbn") + "\t"
+								+ d.get("title"));
+					}
+		
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
 	}
+	
+		
+	
 }
