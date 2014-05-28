@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import javax.xml.transform.stream.StreamSource;
@@ -37,39 +39,20 @@ public class trec_indexing {
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
+
 			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-
-			// Code to create the index
-			Directory index = new RAMDirectory();
-
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48,
-					analyzer);
-
-			
-
-			IndexWriter w = new IndexWriter(index, config);
-			addDoc(w, "Lucene in Action", "193398817");
-			addDoc(w, "Lucene for Dummies", "55320055Z");
-			addDoc(w, "Managing Gigabytes", "55063554A");
-			addDoc(w, "The Art of Computer Science", "9900333X");
-			addDoc(w, "My name is teja", "12842d99");
-			addDoc(w, "Lucene demo by teja", "23k43413");
-			w.close();
-			
 			String path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";
 			//String path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G";
 
 			int number_of_documents_to_index = 1;
-			indexSpecificNumberOfDocuments(path_to_trec,
-					number_of_documents_to_index);
+			Directory index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
 
 			// Text to search
-			String querystr = args.length > 0 ? args[0] : "teja";
+			String querystr = "Christian Slater (William)";
 
-			// The \"title\" arg specifies the default field to use when no
 			// field is explicitly specified in the query
 			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer)
-					.parse(querystr);
+			.parse(querystr);
 
 			// Searching code
 			int hitsPerPage = 10;
@@ -88,7 +71,6 @@ public class trec_indexing {
 				System.out.println((i + 1) + ". " + d.get("isbn") + "\t"
 						+ d.get("title"));
 			}
-
 			// reader can only be closed when there is no need to access the
 			// documents any more
 			reader.close();
@@ -107,33 +89,40 @@ public class trec_indexing {
 		w.addDocument(doc);
 	}
 
-	public static void indexSpecificNumberOfDocuments(String path_to_trec,
-			int number_of_documents_to_index) {
+	public static Directory indexSpecificNumberOfDocuments(String path_to_trec,int number_of_documents_to_index) {
+		Directory index = new RAMDirectory();
+		try{
 
-		File file = new File(path_to_trec);
-		String[] wtx_folders = file.list();
-		int counter = 0;
-		for (String wtx_folder : wtx_folders) {
-			System.out.println("isd");
-			// excluding the info folder
-			if ((new File(path_to_trec + "\\" + wtx_folder).isDirectory())
-					&& !(new File(path_to_trec + "\\" + wtx_folder).getName()
-							.equals("info"))) {
-				if (counter < number_of_documents_to_index) {
-					System.out.println(new File(path_to_trec + "\\"
-							+ wtx_folder).getName());
-					String[] sub_directories = new File(path_to_trec + "\\"
-							+ wtx_folder).list();
-					for (String sub_directory : sub_directories) {
-						if (counter < number_of_documents_to_index) {
-							
-							StringBuilder builder = new StringBuilder();
-							
-							File sub_file = new File(path_to_trec + "\\"
-									+ wtx_folder + "\\" + sub_directory);
+			File file = new File(path_to_trec);
+			String[] wtx_folders = file.list();
+			// Code to create the index
+			// Specify the analyzer for tokenizing text.
+			// The same analyzer should be used for indexing and searching
+			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
 
-							BufferedReader in;
-							try {
+			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48,
+					analyzer);
+			IndexWriter w = new IndexWriter(index, config);
+			int counter = 0;
+			for (String wtx_folder : wtx_folders) {
+				// excluding the info folder
+				if ((new File(path_to_trec + "\\" + wtx_folder).isDirectory())
+						&& !(new File(path_to_trec + "\\" + wtx_folder).getName()
+								.equals("info"))) {
+					if (counter < number_of_documents_to_index) {
+						System.out.println(new File(path_to_trec + "\\"
+								+ wtx_folder).getName());
+						String[] sub_directories = new File(path_to_trec + "\\"
+								+ wtx_folder).list();
+						for (String sub_directory : sub_directories) {
+							if (counter < number_of_documents_to_index) {
+
+								StringBuilder builder = new StringBuilder();
+
+								File sub_file = new File(path_to_trec + "\\"
+										+ wtx_folder + "\\" + sub_directory);
+								System.out.println(sub_file.getAbsolutePath());
+								BufferedReader in;
 								in = new BufferedReader(new InputStreamReader(
 										new GZIPInputStream(
 												new FileInputStream(sub_file
@@ -141,59 +130,49 @@ public class trec_indexing {
 								String content;
 								System.out.println(new File(path_to_trec + "\\"
 										+ wtx_folder + "\\" + sub_directory)
-										.getName() + ":");
-								
+								.getName() + ":");
+
 								while ((content = in.readLine()) != null) {
-									//System.out.println(content);
 									builder.append(content);
-									
-									
 								}
-								
+
 								String sub_file_text = builder.toString();
-								
-								
+
+
 								String xml = "<channel>\n" +
-						                "\n" +
-						                "   <title>Site Name</title>\n" +
-						                "\n" +
-						                "   <item>  \n" +
-						                "       <title>News Title!</title>       \n" +
-						                "   </item>\n" +
-						                "\n" +
-						                "</channel>";
-								XPathFactory xpf = XPathFactory.newInstance();
-						        XPath xPath = xpf.newXPath();
+										"\n" +
+										"   <title>Site Name</title>\n" +
+										"\n" +
+										"   <item>  \n" +
+										"       <title>News Title!</title>       \n" +
+										"   </item>\n" +
+										"\n" +
+										"</channel>";
 
-						        InputSource inputSource = new InputSource(new StringReader(sub_file_text));
-						        String result;
-								try {
-									result = (String) xPath.evaluate("//DOC", inputSource, XPathConstants.STRING);
-									System.out.println(result);
-								} catch (XPathExpressionException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+								String docno_pattern = "(<DOCNO>(.*?)</DOCNO>)(?<DOC>(.*?)</DOC>)";
+
+								Pattern docno_r = Pattern.compile(docno_pattern);
+								Matcher docno_m = docno_r.matcher(sub_file_text);
+								while (docno_m.find()) {
+									if (counter < number_of_documents_to_index) {
+										String doc_no = docno_m.group(2);
+										String doc_content = docno_m.group(3);
+										addDoc(w, doc_content, doc_no);
+									}
+									counter += 1;
 								}
-						        
-						        
-								//System.out.println(sub_file_text);
-								counter += 1;
-								
-
-							} catch (FileNotFoundException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
 							}
-
 						}
 					}
 				}
+
 			}
+			w.close();
 
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
 		}
+		return index;
+	}	
 
-	}
 }
