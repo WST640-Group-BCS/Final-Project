@@ -1,3 +1,5 @@
+import gui.MainView;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,6 +11,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import javax.swing.JLabel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -24,6 +30,7 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -37,13 +44,16 @@ import org.xml.sax.InputSource;
 public class trec_indexing {
 	
 	private static String OS = System.getProperty("os.name").toLowerCase();
+	private static MainView mainView;
+	private static StandardAnalyzer analyzer;
+	private static Directory index;
 
 	public static void main(String[] args) {
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
-			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+			analyzer = new StandardAnalyzer(Version.LUCENE_48);
 			String path_to_trec = "";
 			if (isWindows()) {
 				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
@@ -52,44 +62,92 @@ public class trec_indexing {
 			}
 
 			int number_of_documents_to_index = 1;
-			Directory index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
-			// Text to search
-			String querystr = "Christian Slater (William)";
+			index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
+			
+			mainView = new MainView();
+			final JTextField searchField = mainView.getSearchField();
+			searchField.getDocument().addDocumentListener(new DocumentListener() {
+				  public void changedUpdate(DocumentEvent e) {
+				    try {
+						textFieldValueChanged();
+					} catch (ParseException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				  }
+				  public void removeUpdate(DocumentEvent e) {
+					  try {
+						textFieldValueChanged();
+					} catch (ParseException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				  }
+				  public void insertUpdate(DocumentEvent e) {
+					  try {
+						textFieldValueChanged();
+					} catch (ParseException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				  }
 
-			// field is explicitly specified in the query
-			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
+				  public void textFieldValueChanged() throws ParseException, IOException {
+//					  firstClusterResultsTextArea.setText("Result from first cluster");
+//					  secondClusterResultsTextArea.setText("Result from second cluster");
+//					  thirdClusterResultsTextArea.setText("Result from third cluster");
+						// Text to search
+						String querystr = searchField.getText();
 
-			// Searching code
-			int hitsPerPage = 10;
-			IndexReader reader = DirectoryReader.open(index);
-			IndexSearcher searcher = new IndexSearcher(reader);
-			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
-			searcher.search(q, collector);
-			ScoreDoc[] hits = collector.topDocs().scoreDocs;
+						// field is explicitly specified in the query
+						Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
 
-			// Code to display the results of search
-			System.out.println("Found " + hits.length + " hits.");
-			for (int i = 0; i < hits.length; ++i) {
-				int docId = hits[i].doc;
-				Document d = searcher.doc(docId);
-				System.out.println((i + 1) + ". " + d.get("isbn") + "\t"
-						+ d.get("title"));
-			}
-			// reader can only be closed when there is no need to access the
-			// documents any more
-			reader.close();
+						// Searching code
+						int hitsPerPage = 10;
+						IndexReader reader = DirectoryReader.open(index);
+						IndexSearcher searcher = new IndexSearcher(reader);
+						TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
+						searcher.search(q, collector);
+						ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+						// Code to display the results of search
+						System.out.println("Found " + hits.length + " hits.");
+						JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
+						for (int i = 0; i < hits.length; ++i) {
+							int docId = hits[i].doc;
+							Document d = searcher.doc(docId);
+							firstResultTextArea.setText(d.get("isbn"));
+						}
+
+						// reader can only be closed when there is no need to access the
+						// documents any more
+						reader.close();
+				  }
+				});
+			
+
+
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 	}
 
-	private static void addDoc(IndexWriter w, String title, String isbn)
+	private static void addDoc(IndexWriter w, String content, String documentNumber)
 			throws IOException {
 		Document doc = new Document();
 		// A text field will be tokenized
-		doc.add(new TextField("title", title, Field.Store.YES));
+		doc.add(new TextField("title", content, Field.Store.YES));
 		// We use a string field for isbn because we don\'t want it tokenized
-		doc.add(new StringField("isbn", isbn, Field.Store.YES));
+		doc.add(new StringField("isbn", documentNumber, Field.Store.YES));
 		w.addDocument(doc);
 	}
 
@@ -120,7 +178,7 @@ public class trec_indexing {
 						&& !(new File(path_to_trec + symbol + wtx_folder).getName()
 								.equals("info"))) {
 					if (counter < number_of_documents_to_index) {
-						System.out.println(new File(path_to_trec + symbol
+						System.out.println("Using the folder: " + new File(path_to_trec + symbol
 								+ wtx_folder).getName());
 						String[] sub_directories = new File(path_to_trec + symbol
 								+ wtx_folder).list();
@@ -131,33 +189,19 @@ public class trec_indexing {
 
 								File sub_file = new File(path_to_trec + symbol
 										+ wtx_folder + symbol + sub_directory);
-								System.out.println(sub_file.getAbsolutePath());
-								BufferedReader in;
-								in = new BufferedReader(new InputStreamReader(
+								System.out.println("Using the file: " + sub_file.getAbsolutePath());
+								BufferedReader in = new BufferedReader(new InputStreamReader(
 										new GZIPInputStream(
 												new FileInputStream(sub_file
 														.getAbsolutePath()))));
 								String content;
-								System.out.println(new File(path_to_trec + symbol
-										+ wtx_folder + symbol + sub_directory)
-								.getName() + ":");
+								//System.out.println(new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
 
 								while ((content = in.readLine()) != null) {
 									builder.append(content);
 								}
 
 								String sub_file_text = builder.toString();
-
-
-								String xml = "<channel>\n" +
-										"\n" +
-										"   <title>Site Name</title>\n" +
-										"\n" +
-										"   <item>  \n" +
-										"       <title>News Title!</title>       \n" +
-										"   </item>\n" +
-										"\n" +
-										"</channel>";
 
 								String docno_pattern = "(<DOCNO>(.*?)</DOCNO>)(?<DOC>(.*?)</DOC>)";
 

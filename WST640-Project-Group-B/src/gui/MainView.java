@@ -17,6 +17,20 @@ import javax.swing.event.DocumentListener;
 
 public class MainView extends JFrame {
 
+	JTextField textField1;
+	private JLabel firstClusterResultsTextArea;
+	
+	public JTextField getSearchField()
+	{
+		return this.textField1;
+	}
+	
+	public JLabel firstClusterResultsTextArea()
+	{
+		return this.firstClusterResultsTextArea;
+	}
+
+	
 	public MainView()
 	{
 		super("WST640 - Project - Group b");
@@ -25,7 +39,7 @@ public class MainView extends JFrame {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		
-		final JLabel firstClusterResultsTextArea = new JLabel();	
+		this.firstClusterResultsTextArea = new JLabel();	
 		firstClusterResultsTextArea.setHorizontalAlignment(JLabel.CENTER);
 		firstClusterResultsTextArea.setVerticalAlignment(JLabel.TOP);
 		firstClusterResultsTextArea.setOpaque(true);
@@ -51,29 +65,10 @@ public class MainView extends JFrame {
 		thirdClusterResultsTextArea.setOpaque(true);
 		thirdClusterResultsTextArea.setBackground(Color.green);
 
-		final JTextField textField1;
-
 		textField1 = new JTextField(10);
 		frame.getContentPane().add(textField1, BorderLayout.PAGE_START);
 	    textField1.setHorizontalAlignment(JTextField.CENTER);
-		textField1.getDocument().addDocumentListener(new DocumentListener() {
-			  public void changedUpdate(DocumentEvent e) {
-			    textFieldValueChanged();
-			  }
-			  public void removeUpdate(DocumentEvent e) {
-				  textFieldValueChanged();
-			  }
-			  public void insertUpdate(DocumentEvent e) {
-				  textFieldValueChanged();
-			  }
-
-			  public void textFieldValueChanged() {
-				  String valueTypedByUser = textField1.getText();
-				  firstClusterResultsTextArea.setText("Result from first cluster");
-				  secondClusterResultsTextArea.setText("Result from second cluster");
-				  thirdClusterResultsTextArea.setText("Result from third cluster");
-			  }
-			});
+		
 
 		frame.pack();
 		frame.setSize(800, 600);
