@@ -43,6 +43,9 @@ import org.xml.sax.InputSource;
 
 public class trec_indexing {
 	
+	@SuppressWarnings("deprecation")
+	static
+    Version luceneVersion = Version.LUCENE_CURRENT;
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private static MainView mainView;
 	private static StandardAnalyzer analyzer;
@@ -53,7 +56,7 @@ public class trec_indexing {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
-			analyzer = new StandardAnalyzer(Version.LUCENE_48);
+			analyzer = new StandardAnalyzer(luceneVersion);
 			String path_to_trec = "";
 			if (isWindows()) {
 				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
@@ -109,7 +112,7 @@ public class trec_indexing {
 						String querystr = searchField.getText();
 
 						// field is explicitly specified in the query
-						Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
+						Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
 
 						// Searching code
 						int hitsPerPage = 10;
@@ -160,8 +163,9 @@ public class trec_indexing {
 			// Code to create the index
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
-			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
+			
+			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion);
+			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
 			int counter = 0;
 			

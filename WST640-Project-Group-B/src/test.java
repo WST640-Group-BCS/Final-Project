@@ -21,18 +21,21 @@ import org.apache.lucene.util.Version;
 
 public class test 
 {
+	@SuppressWarnings("deprecation")
+	static
+    Version luceneVersion = Version.LUCENE_CURRENT;
 	public static void main(String[] args)
 	{
 		try
 		{
 			//	Specify the analyzer for tokenizing text.
 		    //	The same analyzer should be used for indexing and searching
-			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
+			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion);
 			
 			//	Code to create the index
 			Directory index = new RAMDirectory();
 			
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_48, analyzer);
+			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			
 			IndexWriter w = new IndexWriter(index, config);
 			addDoc(w, "Lucene in Action", "193398817");
@@ -47,7 +50,7 @@ public class test
 			String querystr = args.length > 0 ? args[0] : "teja";
 			
 			//	The \"title\" arg specifies the default field to use when no field is explicitly specified in the query
-			Query q = new QueryParser(Version.LUCENE_48, "title", analyzer).parse(querystr);
+			Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
 			
 			// Searching code
 			int hitsPerPage = 10;
