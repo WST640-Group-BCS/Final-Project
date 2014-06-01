@@ -160,6 +160,7 @@ public class trec_indexing {
 
 			File file = new File(path_to_trec);
 			String[] wtx_folders = file.list();
+			
 			// Code to create the index
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
@@ -200,13 +201,15 @@ public class trec_indexing {
 														.getAbsolutePath()))));
 								String content;
 								//System.out.println(new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
-
+								
 								while ((content = in.readLine()) != null) {
 									builder.append(content);
 								}
 
 								String sub_file_text = builder.toString();
-
+								
+								in.close();
+								
 								String docno_pattern = "(<DOCNO>(.*?)</DOCNO>)(?<DOC>(.*?)</DOC>)";
 
 								Pattern docno_r = Pattern.compile(docno_pattern);
