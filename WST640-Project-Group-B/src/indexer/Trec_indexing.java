@@ -54,33 +54,38 @@ public class Trec_indexing {
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private static MainView mainView;
 	private static StandardAnalyzer analyzer;
-	private static Directory index;
+	private static Directory directory;
 	private static int numberOfFilesToIndex = 1;
 	
-	public void indexAndSearch() {
+	public void startIndexingFiles(int numberOfDOCTagsToIndex) {
+		// Specify the analyzer for tokenizing text.
+		// The same analyzer should be used for indexing and searching
+
+		analyzer = new StandardAnalyzer(luceneVersion);
+		String path_to_trec = "";
+		if (isWindows()) {
+			path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
+		} else if (isMac()) {
+			path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
+		}
+
+		directory = indexSpecificNumberOfDocuments(path_to_trec, numberOfDOCTagsToIndex);
+	}
+	
+	public void search(String queryString)
+	{
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
-			analyzer = new StandardAnalyzer(luceneVersion);
-			String path_to_trec = "";
-			if (isWindows()) {
-				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
-			} else if (isMac()) {
-				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
-			}
-
-			int NumberOfDOCTagsToIndex = 7;
-			index = indexSpecificNumberOfDocuments(path_to_trec, NumberOfDOCTagsToIndex);
-			
-			String querystr = "william";
+			String querystr = queryString;
 
 			// field is explicitly specified in the query
 			Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
 
 			// Searching code
 			int hitsPerPage = 10;
-			IndexReader reader = DirectoryReader.open(index);
+			IndexReader reader = DirectoryReader.open(directory);
 			IndexSearcher searcher = new IndexSearcher(reader);
 			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
 			searcher.search(q, collector);
