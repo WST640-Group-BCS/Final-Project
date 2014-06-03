@@ -55,22 +55,13 @@ public class trec_indexing {
 	private static StandardAnalyzer analyzer;
 	private static Directory index;
 	private static int numberOfFilesToIndex = 1;
-//	private static StopFilter stopFilter = new StopFilter(Version.LUCENE_36, analyzer, stopWords);;
 	
 	public static void main(String[] args) {
 		try {
-			/*
-			 * Create Stopword Array
-			 */
-			ArrayList<String> words = new ArrayList<String>();
-			Set stopWords = StopFilter.makeStopSet(luceneVersion, words, true);
-
-			
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
 			analyzer = new StandardAnalyzer(luceneVersion);
-			System.out.println(analyzer.STOP_WORDS_SET);
 			String path_to_trec = "";
 			if (isWindows()) {
 				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
