@@ -1,3 +1,4 @@
+package indexer;
 import gui.MainView;
 
 import java.awt.List;
@@ -45,7 +46,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 import org.xml.sax.InputSource;
 
-public class trec_indexing {
+public class Trec_indexing {
 	
 	@SuppressWarnings("deprecation")
 	static
@@ -56,7 +57,7 @@ public class trec_indexing {
 	private static Directory index;
 	private static int numberOfFilesToIndex = 1;
 	
-	public static void main(String[] args) {
+	public void indexAndSearch() {
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
@@ -69,83 +70,37 @@ public class trec_indexing {
 				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
 			}
 
-			int number_of_documents_to_index = 7;
-			index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
+			int NumberOfDOCTagsToIndex = 7;
+			index = indexSpecificNumberOfDocuments(path_to_trec, NumberOfDOCTagsToIndex);
 			
-			mainView = new MainView();
-			final JTextField searchField = mainView.getSearchField();
-			searchField.getDocument().addDocumentListener(new DocumentListener() {
-				  public void changedUpdate(DocumentEvent e) {
-				    try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-				  public void removeUpdate(DocumentEvent e) {
-					  try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-				  public void insertUpdate(DocumentEvent e) {
-					  try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
+			String querystr = "william";
 
-				  public void textFieldValueChanged() throws ParseException, IOException {
-//					  firstClusterResultsTextArea.setText("Result from first cluster");
-//					  secondClusterResultsTextArea.setText("Result from second cluster");
-//					  thirdClusterResultsTextArea.setText("Result from third cluster");
-						// Text to search
-						String querystr = searchField.getText();
+			// field is explicitly specified in the query
+			Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
 
-						// field is explicitly specified in the query
-						Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
+			// Searching code
+			int hitsPerPage = 10;
+			IndexReader reader = DirectoryReader.open(index);
+			IndexSearcher searcher = new IndexSearcher(reader);
+			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
+			searcher.search(q, collector);
+			ScoreDoc[] hits = collector.topDocs().scoreDocs;
 
-						// Searching code
-						int hitsPerPage = 10;
-						IndexReader reader = DirectoryReader.open(index);
-						IndexSearcher searcher = new IndexSearcher(reader);
-						TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
-						searcher.search(q, collector);
-						ScoreDoc[] hits = collector.topDocs().scoreDocs;
+			// Code to display the results of search
+			System.out.println("Found " + hits.length + " hits.");
+			JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
+			for (int i = 0; i < hits.length; ++i) {
+				int docId = hits[i].doc;
+				Document d = searcher.doc(docId);
+				firstResultTextArea.setText(d.get("isbn"));
+			}
 
-						// Code to display the results of search
-						System.out.println("Found " + hits.length + " hits.");
-						JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
-						for (int i = 0; i < hits.length; ++i) {
-							int docId = hits[i].doc;
-							Document d = searcher.doc(docId);
-							firstResultTextArea.setText(d.get("isbn"));
-						}
-
-						// reader can only be closed when there is no need to access the
-						// documents any more
-						reader.close();
-				  }
-				});
-			
-
+			// reader can only be closed when there is no need to access the
+			// documents any more
+			reader.close();
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			//System.out.println(e.getMessage());
 		}
 	}
 
