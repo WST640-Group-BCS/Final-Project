@@ -1,5 +1,7 @@
+package indexer;
 import gui.MainView;
 
+import java.awt.List;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,6 +9,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -21,6 +25,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -41,7 +46,7 @@ import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 import org.xml.sax.InputSource;
 
-public class trec_indexing {
+public class Trec_indexing {
 	
 	@SuppressWarnings("deprecation")
 	static
@@ -49,98 +54,58 @@ public class trec_indexing {
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private static MainView mainView;
 	private static StandardAnalyzer analyzer;
-	private static Directory index;
+	private static Directory directory;
+	private static int numberOfFilesToIndex = 1;
+	
+	public void startIndexingFiles(int numberOfDOCTagsToIndex) {
+		// Specify the analyzer for tokenizing text.
+		// The same analyzer should be used for indexing and searching
 
-	public static void main(String[] args) {
+		analyzer = new StandardAnalyzer(luceneVersion);
+		String path_to_trec = "";
+		if (isWindows()) {
+			path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
+		} else if (isMac()) {
+			path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
+		}
+
+		directory = indexSpecificNumberOfDocuments(path_to_trec, numberOfDOCTagsToIndex);
+	}
+	
+	public void search(String queryString)
+	{
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
 
-			analyzer = new StandardAnalyzer(luceneVersion);
-			String path_to_trec = "";
-			if (isWindows()) {
-				path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
-			} else if (isMac()) {
-				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
+			String querystr = queryString;
+
+			// field is explicitly specified in the query
+			Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
+
+			// Searching code
+			int hitsPerPage = 10;
+			IndexReader reader = DirectoryReader.open(directory);
+			IndexSearcher searcher = new IndexSearcher(reader);
+			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
+			searcher.search(q, collector);
+			ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+			// Code to display the results of search
+			System.out.println("Found " + hits.length + " hits.");
+			JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
+			for (int i = 0; i < hits.length; ++i) {
+				int docId = hits[i].doc;
+				Document d = searcher.doc(docId);
+				firstResultTextArea.setText(d.get("isbn"));
 			}
 
-			int number_of_documents_to_index = 1;
-			index = indexSpecificNumberOfDocuments(path_to_trec, number_of_documents_to_index);
-			
-			mainView = new MainView();
-			final JTextField searchField = mainView.getSearchField();
-			searchField.getDocument().addDocumentListener(new DocumentListener() {
-				  public void changedUpdate(DocumentEvent e) {
-				    try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-				  public void removeUpdate(DocumentEvent e) {
-					  try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-				  public void insertUpdate(DocumentEvent e) {
-					  try {
-						textFieldValueChanged();
-					} catch (ParseException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-
-				  public void textFieldValueChanged() throws ParseException, IOException {
-//					  firstClusterResultsTextArea.setText("Result from first cluster");
-//					  secondClusterResultsTextArea.setText("Result from second cluster");
-//					  thirdClusterResultsTextArea.setText("Result from third cluster");
-						// Text to search
-						String querystr = searchField.getText();
-
-						// field is explicitly specified in the query
-						Query q = new QueryParser(luceneVersion, "title", analyzer).parse(querystr);
-
-						// Searching code
-						int hitsPerPage = 10;
-						IndexReader reader = DirectoryReader.open(index);
-						IndexSearcher searcher = new IndexSearcher(reader);
-						TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
-						searcher.search(q, collector);
-						ScoreDoc[] hits = collector.topDocs().scoreDocs;
-
-						// Code to display the results of search
-						System.out.println("Found " + hits.length + " hits.");
-						JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
-						for (int i = 0; i < hits.length; ++i) {
-							int docId = hits[i].doc;
-							Document d = searcher.doc(docId);
-							firstResultTextArea.setText(d.get("isbn"));
-						}
-
-						// reader can only be closed when there is no need to access the
-						// documents any more
-						reader.close();
-				  }
-				});
-			
-
+			// reader can only be closed when there is no need to access the
+			// documents any more
+			reader.close();
 
 		} catch (Exception e) {
-			System.out.println(e.getMessage());
+			//System.out.println(e.getMessage());
 		}
 	}
 
@@ -182,7 +147,7 @@ public class trec_indexing {
 				if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())
 						&& !(new File(path_to_trec + symbol + wtx_folder).getName()
 								.equals("info"))) {
-					if (counter < number_of_documents_to_index) {
+					if (counter < numberOfFilesToIndex) {
 						System.out.println("Using the folder: " + new File(path_to_trec + symbol
 								+ wtx_folder).getName());
 						String[] sub_directories = new File(path_to_trec + symbol
@@ -218,6 +183,7 @@ public class trec_indexing {
 									if (counter < number_of_documents_to_index) {
 										String doc_no = docno_m.group(2);
 										String doc_content = docno_m.group(3);
+										
 										addDoc(w, doc_content, doc_no);
 									}
 									counter += 1;

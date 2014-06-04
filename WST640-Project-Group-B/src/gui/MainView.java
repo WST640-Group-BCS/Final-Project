@@ -2,23 +2,23 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-public class MainView extends JFrame {
+import org.w3c.dom.events.DocumentEvent;
+
+import indexer.Trec_indexing;
+
+public class MainView extends JFrame implements DocumentListener {
 
 	JTextField textField1;
 	private JLabel firstClusterResultsTextArea;
+	private static Trec_indexing indexTrec;
+	final JLabel secondClusterResultsTextArea;
+	final JLabel thirdClusterResultsTextArea;
 	
 	public JTextField getSearchField()
 	{
@@ -48,7 +48,7 @@ public class MainView extends JFrame {
 		frame.getContentPane().add(firstClusterResultsTextArea, BorderLayout.LINE_START);
 		firstClusterResultsTextArea.setBackground(Color.red);
 		
-		final JLabel secondClusterResultsTextArea = new JLabel();
+		secondClusterResultsTextArea = new JLabel();
 		secondClusterResultsTextArea.setHorizontalAlignment(JLabel.CENTER);
 		secondClusterResultsTextArea.setVerticalAlignment(JLabel.TOP);
 		secondClusterResultsTextArea.setBackground(Color.blue);
@@ -57,7 +57,7 @@ public class MainView extends JFrame {
 
 		frame.getContentPane().add(secondClusterResultsTextArea, BorderLayout.CENTER);
 
-		final JLabel thirdClusterResultsTextArea = new JLabel();	
+		thirdClusterResultsTextArea = new JLabel();	
 		thirdClusterResultsTextArea.setHorizontalAlignment(JLabel.CENTER);
 		thirdClusterResultsTextArea.setVerticalAlignment(JLabel.TOP);
 		
@@ -68,7 +68,8 @@ public class MainView extends JFrame {
 		textField1 = new JTextField(10);
 		frame.getContentPane().add(textField1, BorderLayout.PAGE_START);
 	    textField1.setHorizontalAlignment(JTextField.CENTER);
-		
+		textField1.getDocument().addDocumentListener(this);
+
 
 		frame.pack();
 		frame.setSize(800, 600);
@@ -78,6 +79,33 @@ public class MainView extends JFrame {
 
 	public static void main(String[] args) {
 		new MainView();
+		indexTrec = new Trec_indexing();
+		indexTrec.startIndexingFiles(7);
+		
+
+	}
+	public void typed()
+	{
+	  String valueTypedByUser = textField1.getText();
+	  indexTrec.search(valueTypedByUser);
+
+	  firstClusterResultsTextArea.setText("Result from first cluster");
+	  secondClusterResultsTextArea.setText("Result from second cluster");
+	  thirdClusterResultsTextArea.setText("Result from third cluster");
+	}
+	@Override
+	public void insertUpdate(javax.swing.event.DocumentEvent e) {
+		this.typed();
+	}
+
+	@Override
+	public void removeUpdate(javax.swing.event.DocumentEvent e) {
+		this.typed();
+	}
+
+	@Override
+	public void changedUpdate(javax.swing.event.DocumentEvent e) {
+		this.typed();
 	}
 }
 
