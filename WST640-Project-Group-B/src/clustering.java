@@ -173,7 +173,7 @@ public class clustering
             		
             		Document doc_to_insert = new Document();
                     Field field = new Field("body", doc.getContentUrl(), type);
-                    doc_to_insert.add(field);
+                    //doc_to_insert.add(field);
                     cluster_documents_list.add(doc_to_insert);
                     
                     
