@@ -2,7 +2,7 @@
 /*
  * Carrot2 project.
  *
- * Copyright (C) 2002-2014, Dawid Weiss, Stanisław Osiński.
+ * Copyright (C) 2002-2014, Dawid Weiss, Stanis��aw Osi��ski.
  * All rights reserved.
  *
  * Refer to the full license file "carrot2.LICENSE"
@@ -51,6 +51,7 @@ import org.carrot2.examples.ConsoleFormatter;
 public class clustering
 {
 	private static String OS = System.getProperty("os.name").toLowerCase();
+	
     public static void main(String [] args)
     {
     	try{
@@ -64,10 +65,7 @@ public class clustering
 				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
 			}
 			
-
 			int number_of_documents_to_index = 20;
-            
-            
 
 			String symbol = "";
 			if (isWindows()) {
@@ -173,15 +171,11 @@ public class clustering
             		
             		Document doc_to_insert = new Document();
                     Field field = new Field("body", doc.getContentUrl(), type);
-                    doc_to_insert.add(field);
+                    //doc_to_insert.add(field);
                     cluster_documents_list.add(doc_to_insert);
-                    
-                    
-                	
                 }
                 //System.out.println(element.getClass());
                 //System.out.print(element.toString());
-                //
              }
             
             

@@ -2,6 +2,8 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -14,7 +16,7 @@ import indexer.Trec_indexing;
 
 public class MainView extends JFrame implements DocumentListener {
 
-	JTextField textField1;
+	JTextField searchField;
 	private JLabel firstClusterResultsTextArea;
 	private static Trec_indexing indexTrec;
 	final JLabel secondClusterResultsTextArea;
@@ -22,7 +24,7 @@ public class MainView extends JFrame implements DocumentListener {
 	
 	public JTextField getSearchField()
 	{
-		return this.textField1;
+		return this.searchField;
 	}
 	
 	public JLabel firstClusterResultsTextArea()
@@ -65,10 +67,10 @@ public class MainView extends JFrame implements DocumentListener {
 		thirdClusterResultsTextArea.setOpaque(true);
 		thirdClusterResultsTextArea.setBackground(Color.green);
 
-		textField1 = new JTextField(10);
-		frame.getContentPane().add(textField1, BorderLayout.PAGE_START);
-	    textField1.setHorizontalAlignment(JTextField.CENTER);
-		textField1.getDocument().addDocumentListener(this);
+		searchField = new JTextField(10);
+		frame.getContentPane().add(searchField, BorderLayout.PAGE_START);
+	    searchField.setHorizontalAlignment(JTextField.CENTER);
+		searchField.getDocument().addDocumentListener(this);
 
 
 		frame.pack();
@@ -86,9 +88,12 @@ public class MainView extends JFrame implements DocumentListener {
 	}
 	public void typed()
 	{
-	  String valueTypedByUser = textField1.getText();
-	  indexTrec.search(valueTypedByUser);
-
+	  String valueTypedByUser = searchField.getText();
+	  ArrayList<String> searchResult = indexTrec.search(valueTypedByUser);
+	  System.out.println(searchResult);
+	  //for (String string : searchResult) {
+		
+	//}
 	  firstClusterResultsTextArea.setText("Result from first cluster");
 	  secondClusterResultsTextArea.setText("Result from second cluster");
 	  thirdClusterResultsTextArea.setText("Result from third cluster");

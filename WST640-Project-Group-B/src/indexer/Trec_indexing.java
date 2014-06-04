@@ -72,8 +72,10 @@ public class Trec_indexing {
 		directory = indexSpecificNumberOfDocuments(path_to_trec, numberOfDOCTagsToIndex);
 	}
 	
-	public void search(String queryString)
+	public ArrayList<String> search(String queryString)
 	{
+		ArrayList<String> stringArray = new ArrayList<String>();
+
 		try {
 			// Specify the analyzer for tokenizing text.
 			// The same analyzer should be used for indexing and searching
@@ -93,11 +95,10 @@ public class Trec_indexing {
 
 			// Code to display the results of search
 			System.out.println("Found " + hits.length + " hits.");
-			JLabel firstResultTextArea = mainView.firstClusterResultsTextArea();
 			for (int i = 0; i < hits.length; ++i) {
 				int docId = hits[i].doc;
 				Document d = searcher.doc(docId);
-				firstResultTextArea.setText(d.get("isbn"));
+				stringArray.add(d.get("isbn"));
 			}
 
 			// reader can only be closed when there is no need to access the
@@ -107,6 +108,7 @@ public class Trec_indexing {
 		} catch (Exception e) {
 			//System.out.println(e.getMessage());
 		}
+		return stringArray;
 	}
 
 	private static void addDoc(IndexWriter w, String content, String documentNumber)
