@@ -65,10 +65,6 @@ public class clustering
 				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
 			}
 			
-			int numberOfDOCTagsToIndexInONEFile = 30;
-			
-			int numberOfFoldersToUse = 1;
-			int numberOfFilesToIndex = 20;
 			
 			String symbol = "";
 			if (isWindows()) {
@@ -76,9 +72,14 @@ public class clustering
 			} else if (isMac()) {
 				symbol = "/";
 			}
+			int numberOfFoldersToUse = 1;
+			int numberOfFilesToIndex = 10;
+			int numberOfDOCTagsToIndexInONEFile = 30;
+
 			int numberOfDOCTagIndexing = 0;
 			int numberOfFilesIndexing = 0;
 			int numberOfFolderUsing = 0;
+			
 			File file = new File(path_to_trec);
 			String[] wtx_folders = file.list();
 			
@@ -151,6 +152,14 @@ public class clustering
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
             
             System.out.println("Number of Clusters Made: " + clustersByTopic.size());
+            
+            Cluster firstCluster = clustersByTopic.get(0);
+            List<Document> documentsOfFirstCluster = firstCluster.getDocuments();
+            
+            for (Document document : documentsOfFirstCluster)
+            {
+                System.out.println(document.getTitle());
+            }
             
             /* Perform clustering by domain. In this case query is not useful, hence it is null. */
             //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);

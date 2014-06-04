@@ -162,13 +162,13 @@ public class trec_indexing_local {
 							             * We will create Lucene documents with searchable "fullContent" field and "title", 
 							             * "url" and "snippet" fields for clustering.
 							             */
-										
-							            //doc.add(new TextField("fullContent", doc_content, Store.YES));
-							            //doc.add(new TextField("title", doc_no, Store.YES));
 							            doc.add(new TextField("fullContent", doc_content, Store.NO));
 							            doc.add(new TextField("title", doc_no, Store.YES));
 							            doc.add(new TextField("snippet", doc_content, Store.YES));
 							            doc.add(new StringField("url", doc_no, Store.YES));
+
+							            //doc.add(new TextField("fullContent", doc_content, Store.YES));
+							            //doc.add(new TextField("title", doc_no, Store.YES));
 							            writer.addDocument(doc);
 									}
 									counter += 1;

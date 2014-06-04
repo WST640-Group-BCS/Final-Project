@@ -10,15 +10,17 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentListener;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.store.Directory;
 import org.w3c.dom.events.DocumentEvent;
 
-import indexer.Trec_indexing;
+import indexer.TrecIndexer;
 
 public class MainView extends JFrame implements DocumentListener {
 
 	JTextField searchField;
 	private JLabel firstClusterResultsTextArea;
-	private static Trec_indexing indexTrec;
+	private static TrecIndexer indexTrec;
 	final JLabel secondClusterResultsTextArea;
 	final JLabel thirdClusterResultsTextArea;
 	
@@ -80,16 +82,18 @@ public class MainView extends JFrame implements DocumentListener {
 	}
 
 	public static void main(String[] args) {
-		new MainView();
-		indexTrec = new Trec_indexing();
-		indexTrec.startIndexingFiles(7);
-		
-
+		//new MainView();
+		indexTrec = new TrecIndexer();
+		Directory index = indexTrec.startIndexingFiles();
+		ArrayList<Document> searchResult = indexTrec.search("william");
+		Document document = searchResult.get(0);
+		//System.out.println(searchResult.get(0).getField("fullContent"));
+//		System.out.println(indexTrec.search("william"));
 	}
 	public void typed()
 	{
 	  String valueTypedByUser = searchField.getText();
-	  ArrayList<String> searchResult = indexTrec.search(valueTypedByUser);
+	  ArrayList<Document> searchResult = indexTrec.search(valueTypedByUser);
 	  System.out.println(searchResult);
 	  //for (String string : searchResult) {
 		
