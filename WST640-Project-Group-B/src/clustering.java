@@ -65,38 +65,47 @@ public class clustering
 				path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
 			}
 			
-			int number_of_documents_to_index = 20;
-
+			int numberOfDOCTagsToIndexInONEFile = 30;
+			
+			int numberOfFoldersToUse = 1;
+			int numberOfFilesToIndex = 1;
+			
 			String symbol = "";
 			if (isWindows()) {
 				symbol = "\\";	
 			} else if (isMac()) {
 				symbol = "/";
 			}
-			int counter = 0;
-			
+			int numberOfDOCTagIndexing = 0;
+			int numberOfFilesIndexing = 0;
+			int numberOfFolderUsing = 0;
 			File file = new File(path_to_trec);
 			String[] wtx_folders = file.list();
+			
+			/*
+			 * Find the correct folders and files to use.
+			 */
 			for (String wtx_folder : wtx_folders) {
-				// excluding the info folder
-				if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())
-						&& !(new File(path_to_trec + symbol + wtx_folder).getName().equals("info"))) {
-					if (counter < number_of_documents_to_index) {
-						System.out.println(new File(path_to_trec + symbol + wtx_folder).getName());
+				if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())) {
+					if (numberOfFolderUsing < numberOfFoldersToUse) {
+						System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
 						String[] sub_directories = new File(path_to_trec + symbol + wtx_folder).list();
-						for (String sub_directory : sub_directories) {
-							if (counter < number_of_documents_to_index) {
+						for (String sub_directory : sub_directories) 
+						{
+							if (numberOfFilesIndexing < numberOfFilesToIndex) 
+							{
 
 								StringBuilder builder = new StringBuilder();
 
 								File sub_file = new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory);
-								System.out.println(sub_file.getAbsolutePath());
+								
+								System.out.println("Using the specific path: " + sub_file.getAbsolutePath());
 								BufferedReader bufferedReader;
 								bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
 								String content;
-								System.out.println(new File(path_to_trec + symbol
-										+ wtx_folder + symbol + sub_directory)
-								.getName() + ":");
+								
+								System.out.println("Indexing the specific file: " + 
+								new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
 
 								while ((content = bufferedReader.readLine()) != null) {
 									builder.append(content);
@@ -110,43 +119,47 @@ public class clustering
 								Pattern docno_r = Pattern.compile(docno_pattern);
 								Matcher docno_m = docno_r.matcher(sub_file_text);
 								while (docno_m.find()) {
-									if (counter < number_of_documents_to_index) {
+									if (numberOfDOCTagIndexing < numberOfDOCTagsToIndexInONEFile) {
 										String doc_no = docno_m.group(2);
+										System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
 										String doc_content = docno_m.group(3);
-										//addDoc(w, doc_content, doc_no);
 										
-										//Document doc = new Document();
-							            //doc.add(new TextField("fullContent", doc_content, Store.YES));
-							            //doc.add(new TextField("title", doc_no, Store.YES));
 										documents.add(new Document(doc_no, doc_content, doc_content));
 									}
-									counter += 1;
+									numberOfDOCTagIndexing += 1;
 								}
+								numberOfFilesIndexing += 1;
 							}
+							numberOfDOCTagIndexing = 0;
 						}
+						numberOfFolderUsing += 1;
 					}
 				}
-
-			}
-            
-            
-            
-            
-            
+			}            
             
             /* A controller to manage the processing pipeline. */
             final Controller controller = ControllerFactory.createSimple();
-
+            
             /*
-             * Perform clustering by topic using the Lingo algorithm. Lingo can 
-             * take advantage of the original query, so we provide it along with the documents.
+             * Sin: The second parameter here is null because the clusters can be created in relation 
+             * to a query. As we want to compare our query to clusters based on nothing, we won't
+             * provide any information to this paramater.
              */
-            //final ProcessingResult byTopicClusters = controller.process(documents, "data mining",LingoClusteringAlgorithm.class);
-            final ProcessingResult byTopicClusters = controller.process(documents, "data mining", BisectingKMeansClusteringAlgorithm.class);
-            //byTopicClusters.get
+            final ProcessingResult byTopicClusters = controller.process(documents, null, BisectingKMeansClusteringAlgorithm.class);
+            
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();
             
-            //Cluster hej  = clustersByTopic.get(1);
+            Cluster hej  = clustersByTopic.get(0);
+            
+            List<Document> documentsFromFirstCluster = hej.getAllDocuments();
+            
+            System.out.println("Titles in the first cluster:");
+            for (Document document : documentsFromFirstCluster)
+            {
+            	System.out.println(document.getTitle());
+            }
+            
+            System.out.println("Number of Clusters Made: " + clustersByTopic.size());
             
             /* Perform clustering by domain. In this case query is not useful, hence it is null. */
             //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);
