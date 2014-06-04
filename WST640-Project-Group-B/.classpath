@@ -39,5 +39,6 @@
 	<classpathentry kind="lib" path="lib/simple-xml-2.7.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-api-1.6.1.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-suggest-4.8.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
