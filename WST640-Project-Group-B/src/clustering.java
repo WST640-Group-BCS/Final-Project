@@ -91,17 +91,18 @@ public class clustering
 
 								File sub_file = new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory);
 								System.out.println(sub_file.getAbsolutePath());
-								BufferedReader in;
-								in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
+								BufferedReader bufferedReader;
+								bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
 								String content;
 								System.out.println(new File(path_to_trec + symbol
 										+ wtx_folder + symbol + sub_directory)
 								.getName() + ":");
 
-								while ((content = in.readLine()) != null) {
+								while ((content = bufferedReader.readLine()) != null) {
 									builder.append(content);
 								}
-
+								bufferedReader.close();
+								
 								String sub_file_text = builder.toString();
 
 								String docno_pattern = "(<DOCNO>(.*?)</DOCNO>)(?<DOC>(.*?)</DOC>)";
@@ -141,10 +142,11 @@ public class clustering
              * take advantage of the original query, so we provide it along with the documents.
              */
             //final ProcessingResult byTopicClusters = controller.process(documents, "data mining",LingoClusteringAlgorithm.class);
-            final ProcessingResult byTopicClusters = controller.process(documents, "data mining",BisectingKMeansClusteringAlgorithm.class);
+            final ProcessingResult byTopicClusters = controller.process(documents, "data mining", BisectingKMeansClusteringAlgorithm.class);
             //byTopicClusters.get
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();
-            Cluster hej  = clustersByTopic.get(1);
+            
+            //Cluster hej  = clustersByTopic.get(1);
             
             /* Perform clustering by domain. In this case query is not useful, hence it is null. */
             //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);
@@ -177,7 +179,6 @@ public class clustering
                 //System.out.println(element.getClass());
                 //System.out.print(element.toString());
              }
-            
             
             
             //ConsoleFormatter.displayClusters(clustersByDomain);
