@@ -16,11 +16,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
@@ -141,15 +144,48 @@ public class clustering
              */
             //final ProcessingResult byTopicClusters = controller.process(documents, "data mining",LingoClusteringAlgorithm.class);
             final ProcessingResult byTopicClusters = controller.process(documents, "data mining",BisectingKMeansClusteringAlgorithm.class);
-            
+            //byTopicClusters.get
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();
+            Cluster hej  = clustersByTopic.get(1);
             
             /* Perform clustering by domain. In this case query is not useful, hence it is null. */
             //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);
             //final List<Cluster> clustersByDomain = byDomainClusters.getClusters();
             // [[[end:clustering-document-list]]]
             
-            ConsoleFormatter.displayClusters(clustersByTopic);
+            //ConsoleFormatter.displayClusters(clustersByTopic);
+            
+            Iterator clustersByTopicIterator = clustersByTopic.iterator();
+            
+            //iterating through all clusters
+            while(clustersByTopicIterator.hasNext()) {
+            	System.out.println(clustersByTopicIterator.next());
+                Cluster cluster = (Cluster) clustersByTopicIterator.next();
+                List<Document> document_clusters = cluster.getAllDocuments();
+                
+                ArrayList<Document> cluster_documents_list = new ArrayList<>();
+                for(Document doc: document_clusters){
+                	
+                	FieldType type = new FieldType();
+            		type.setIndexed(true);
+            		type.setStored(true);
+            		type.setStoreTermVectors(true);
+            		
+            		Document doc_to_insert = new Document();
+                    Field field = new Field("body", doc.getContentUrl(), type);
+                    doc_to_insert.add(field);
+                    cluster_documents_list.add(doc_to_insert);
+                    
+                    
+                	
+                }
+                //System.out.println(element.getClass());
+                //System.out.print(element.toString());
+                //
+             }
+            
+            
+            
             //ConsoleFormatter.displayClusters(clustersByDomain);
        
 

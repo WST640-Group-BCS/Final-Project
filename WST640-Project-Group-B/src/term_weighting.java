@@ -1,10 +1,7 @@
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -15,8 +12,6 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -80,20 +75,12 @@ public class term_weighting {
 			IndexWriter w = new IndexWriter(index, config);
 			float N = documents.size();
 			for (Document doc: documents){
-				//System.out.println(doc.getField("title"));
 	            w.addDocument(doc);
 			}
 			w.close();
 			
 			IndexReader reader = DirectoryReader.open(index);
 			
-		    //BytesRef term = null;
-			int docNr = 1; 
-			Document doc = reader.document(docNr);
-			Terms termVector = reader.getTermVector(docNr, "body");
-			
-		    TermsEnum itr = termVector.iterator(null);
-		    
 		    //iterating through all terms in the collection
 		    LuceneDictionary ld = new LuceneDictionary( reader, "body" );
 		    BytesRefIterator iterator = ld.getEntryIterator();
@@ -105,7 +92,7 @@ public class term_weighting {
 		        String term = byteRef.utf8ToString();
 		        
 		        
-			    Term termInstance = new Term("body", term);            
+			    Term termInstance = new Term("body", term);      
 			    long total_term_Freq = reader.totalTermFreq(termInstance);
 			    float doc_freq = reader.docFreq(termInstance);
 			    df_weights.put(term, doc_freq);
@@ -122,7 +109,6 @@ public class term_weighting {
 		    
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if(weight_type == "idf"){
