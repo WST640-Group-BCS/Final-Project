@@ -68,7 +68,7 @@ public class clustering
 			int numberOfDOCTagsToIndexInONEFile = 30;
 			
 			int numberOfFoldersToUse = 1;
-			int numberOfFilesToIndex = 1;
+			int numberOfFilesToIndex = 20;
 			
 			String symbol = "";
 			if (isWindows()) {
@@ -145,19 +145,10 @@ public class clustering
              * to a query. As we want to compare our query to clusters based on nothing, we won't
              * provide any information to this paramater.
              */
+            
             final ProcessingResult byTopicClusters = controller.process(documents, null, BisectingKMeansClusteringAlgorithm.class);
             
-            final List<Cluster> clustersByTopic = byTopicClusters.getClusters();
-            
-            Cluster hej  = clustersByTopic.get(0);
-            
-            List<Document> documentsFromFirstCluster = hej.getAllDocuments();
-            
-            System.out.println("Titles in the first cluster:");
-            for (Document document : documentsFromFirstCluster)
-            {
-            	System.out.println(document.getTitle());
-            }
+            final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
             
             System.out.println("Number of Clusters Made: " + clustersByTopic.size());
             
