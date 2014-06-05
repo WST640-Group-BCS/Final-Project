@@ -86,7 +86,7 @@ public class MainView extends JFrame implements DocumentListener {
 		indexTrec = new TrecIndexer();
 		Directory index = indexTrec.startIndexingFiles();
 		ArrayList<Document> searchResult = indexTrec.search("william");
-		Document document = searchResult.get(0);
+		//Document document = searchResult.get(0);
 		//System.out.println(searchResult.get(0).getField("fullContent"));
 //		System.out.println(indexTrec.search("william"));
 	}
