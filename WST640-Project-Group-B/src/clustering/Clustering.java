@@ -9,6 +9,7 @@
  * in the root folder of the repository checkout or at:
  * http://www.carrot2.org/carrot2.LICENSE
  */
+package clustering;
 
 
 import java.io.BufferedReader;
@@ -49,20 +50,20 @@ import org.carrot2.examples.ConsoleFormatter;
  * @see ClusteringDataFromDocumentSources
  * @see UsingCachingController
  */
-public class clustering
+public class Clustering
 {
 	private static String OS = System.getProperty("os.name").toLowerCase();
-	
-	public clustering()
+	private ArrayList<Document> documents;
+	public Clustering()
 	{
 		
 	}
-	
-    public static void main(String [] args)
+		
+	public void startClusteringWithQuery(String query)
     {
     	try{
         
-            final ArrayList<Document> documents = new ArrayList<Document>();
+            this.documents = new ArrayList<Document>();
             
             String path_to_trec = "";
 			if (isWindows()) {
@@ -131,7 +132,7 @@ public class clustering
 										System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
 										String doc_content = docno_m.group(3);
 										
-										documents.add(new Document(doc_no, doc_content, doc_content));
+										this.documents.add(new Document(doc_no, doc_content, doc_content));
 									}
 									numberOfDOCTagIndexing += 1;
 								}
@@ -153,7 +154,7 @@ public class clustering
              * provide any information to this paramater.
              */
             
-            final ProcessingResult byTopicClusters = controller.process(documents, null, STCClusteringAlgorithm.class);
+            final ProcessingResult byTopicClusters = controller.process(documents, query, STCClusteringAlgorithm.class);
             
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
             
