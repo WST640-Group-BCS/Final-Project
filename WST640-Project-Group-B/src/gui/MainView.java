@@ -74,7 +74,6 @@ public class MainView extends JFrame implements DocumentListener {
 	    searchField.setHorizontalAlignment(JTextField.CENTER);
 		searchField.getDocument().addDocumentListener(this);
 
-
 		frame.pack();
 		frame.setSize(800, 600);
 		

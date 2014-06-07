@@ -29,6 +29,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
 import org.carrot2.clustering.kmeans.BisectingKMeansClusteringAlgorithm;
 import org.carrot2.clustering.lingo.LingoClusteringAlgorithm;
+import org.carrot2.clustering.stc.STCClusteringAlgorithm;
 import org.carrot2.clustering.synthetic.ByUrlClusteringAlgorithm;
 import org.carrot2.core.Cluster;
 import org.carrot2.core.Controller;
@@ -51,6 +52,11 @@ import org.carrot2.examples.ConsoleFormatter;
 public class clustering
 {
 	private static String OS = System.getProperty("os.name").toLowerCase();
+	
+	public clustering()
+	{
+		
+	}
 	
     public static void main(String [] args)
     {
@@ -147,7 +153,7 @@ public class clustering
              * provide any information to this paramater.
              */
             
-            final ProcessingResult byTopicClusters = controller.process(documents, null, BisectingKMeansClusteringAlgorithm.class);
+            final ProcessingResult byTopicClusters = controller.process(documents, null, STCClusteringAlgorithm.class);
             
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
             
@@ -156,10 +162,10 @@ public class clustering
             Cluster firstCluster = clustersByTopic.get(0);
             List<Document> documentsOfFirstCluster = firstCluster.getDocuments();
             
-            for (Document document : documentsOfFirstCluster)
-            {
-                System.out.println(document.getTitle());
-            }
+//            for (Document document : documentsOfFirstCluster)
+//            {
+//                System.out.println(document.getScore());
+//            }
             
             /* Perform clustering by domain. In this case query is not useful, hence it is null. */
             //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);
