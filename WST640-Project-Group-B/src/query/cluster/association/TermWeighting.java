@@ -1,5 +1,8 @@
 package query.cluster.association;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
@@ -71,7 +74,10 @@ public class TermWeighting {
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
 		try {
 			Directory index = new RAMDirectory();
-			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion);
+			
+			File stopwords = new File("src/stopwords.en");			
+			Reader reader = new FileReader(stopwords.getAbsolutePath());
+			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
 			
 			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
@@ -82,10 +88,10 @@ public class TermWeighting {
 			}
 			w.close();
 			
-			IndexReader reader = DirectoryReader.open(index);
+			IndexReader index_reader = DirectoryReader.open(index);
 			
 		    //iterating through all terms in the collection
-		    LuceneDictionary ld = new LuceneDictionary( reader, "body" );
+		    LuceneDictionary ld = new LuceneDictionary( index_reader, "body" );
 		    BytesRefIterator iterator = ld.getEntryIterator();
 		    BytesRef byteRef = null;
 		    
@@ -94,14 +100,14 @@ public class TermWeighting {
 		        String term = byteRef.utf8ToString();
 		        
 			    Term termInstance = new Term("body", term);      
-			    long total_term_Freq = reader.totalTermFreq(termInstance);
-			    float doc_freq = reader.docFreq(termInstance);
+			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
+			    float doc_freq = index_reader.docFreq(termInstance);
 			    df_weights.put(term, doc_freq);
 			    float idf_weight = (float) Math.log10(N/doc_freq);
 			    idf_weights.put(term, idf_weight);
 			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
 			 }
-		    reader.close();
+		    index_reader.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
