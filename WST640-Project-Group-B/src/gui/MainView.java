@@ -2,6 +2,8 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -82,7 +84,7 @@ public class MainView extends JFrame implements DocumentListener {
 		frame.setVisible(true);
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws FileNotFoundException, IOException {
 		new MainView();
 //		indexTrec = new TrecIndexer();
 //		Directory index = indexTrec.startIndexingFiles();
@@ -91,6 +93,7 @@ public class MainView extends JFrame implements DocumentListener {
 		//System.out.println(searchResult.get(0).getField("fullContent"));
 //		System.out.println(indexTrec.search("william"));
 		clustering = new Clustering();
+		clustering.startIndexing();
 	}
 	public void typed()
 	{
