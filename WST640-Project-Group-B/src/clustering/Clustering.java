@@ -83,14 +83,7 @@ public class Clustering
 		try {
 			for (ArrayList<org.apache.lucene.document.Document> cluster : this.clustersWithLuceneDocuments) {
 				Directory index = new RAMDirectory();
-				CharArraySet luceneStopwords = new CharArraySet(Version.LUCENE_46, 20, true); 
-				luceneStopwords.add("1.0");
-				luceneStopwords.add("200");
-				luceneStopwords.add("80");
-				luceneStopwords.add("000001");
-				luceneStopwords.add("text");
-
-				StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46, luceneStopwords);
+				StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
 				IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
 				IndexWriter indexWriter = new IndexWriter(index, config);
 
