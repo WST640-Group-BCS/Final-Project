@@ -63,7 +63,7 @@ public class Clustering
 		return clustersWithLuceneDocuments;
 	}
 	
-	public void createLuceneIndexFromCluster()
+	public void createLuceneIndexFromClusters()
 	{
 		
 	}
