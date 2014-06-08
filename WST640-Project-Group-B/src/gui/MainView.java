@@ -33,6 +33,7 @@ public class MainView extends JFrame implements DocumentListener {
 	final JLabel secondClusterResultsTextArea;
 	final JLabel thirdClusterResultsTextArea;
 	private static Clustering clustering;
+	private static Directory luceneIndex;
 	
 	private static ArrayList<Directory> clusterIndexes;
 	
@@ -101,29 +102,37 @@ public class MainView extends JFrame implements DocumentListener {
 		//System.out.println(searchResult.get(0).getField("fullContent"));
 //		System.out.println(indexTrec.search("william"));
 		clustering = new Clustering();
-		clustering.startIndexing();
-		clustering.createClustersWithoutQuery();
-		clusterIndexes = clustering.createLuceneIndexesFromClusters();
+		luceneIndex = clustering.startIndexing();
 		
-		TermWeighting termWeighting = new TermWeighting();
-		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clustering.getClustersWithLuceneDocuments());
-		for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
-			System.out.println("******Cluster******");
-			Iterator iterator = termCluster.iterator();
-			int counter = 0;
-			while (counter < 10) {
-				Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
-				System.out.println(entry);
-				counter += 1;
-			}
-		}
+//		clustering.createClustersWithoutQuery();
+//		clusterIndexes = clustering.createLuceneIndexesFromClusters();
+//		
 	}
 	public void typed()
 	{
-	  String valueTypedByUser = searchField.getText();
+		String searchString = searchField.getText();
+		if (searchString.length() > 2) {
+			ArrayList<Document> documentsResults = clustering.searchForDocuments(searchString, luceneIndex);
+			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
+			
+			TermWeighting termWeighting = new TermWeighting();
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults);
+			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
+				System.out.println("******Cluster******");
+				Iterator iterator = termCluster.iterator();
+				int counter = 0;
+				while (counter < 10) {
+					Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
+					System.out.println(entry);
+					counter += 1;
+				}
+			}
+
+		}
+		
 	  //clustering.startClusteringWithQuery(valueTypedByUser);
 
-	  clustering.searchClustersFromGeneratedLuceneClusters(valueTypedByUser, clusterIndexes);
+	  //clustering.searchClustersFromGeneratedLuceneClusters(valueTypedByUser, clusterIndexes);
 	  
 	  firstClusterResultsTextArea.setText("Result from first cluster");
 	  secondClusterResultsTextArea.setText("Result from second cluster");

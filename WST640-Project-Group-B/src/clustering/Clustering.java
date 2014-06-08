@@ -71,7 +71,7 @@ public class Clustering
 	private static String OS = System.getProperty("os.name").toLowerCase();
 	private ArrayList<Document> documents;
 	private ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersWithLuceneDocuments;
-	
+		
 	public ArrayList<ArrayList<org.apache.lucene.document.Document>> getClustersWithLuceneDocuments()
 	{
 		return this.clustersWithLuceneDocuments;
@@ -137,7 +137,7 @@ public class Clustering
 		
 	}
 	
-	public void startIndexing() throws FileNotFoundException, IOException
+	public Directory startIndexing() throws FileNotFoundException, IOException
 	{
         this.documents = new ArrayList<Document>();
         
@@ -148,16 +148,15 @@ public class Clustering
 			path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
 		}
 		
-		
 		String symbol = "";
 		if (isWindows()) {
 			symbol = "\\";	
 		} else if (isMac()) {
 			symbol = "/";
 		}
-		int numberOfFoldersToUse = 1;
+		int numberOfFoldersToUse = 5;
 		int numberOfFilesToIndex = 10;
-		int numberOfDOCTagsToIndexInONEFile = 30;
+		int numberOfDOCTagsToIndexInONEFile = 10;
 
 		int numberOfDOCTagIndexing = 0;
 		int numberOfFilesIndexing = 0;
@@ -165,12 +164,22 @@ public class Clustering
 		
 		File file = new File(path_to_trec);
 		String[] wtx_folders = file.list();
-		
+
+		Directory index = new RAMDirectory();
+
+		StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+		IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
+		IndexWriter indexWriter = new IndexWriter(index, config);
+
 		/*
 		 * Find the correct folders and files to use.
 		 */
 		for (String wtx_folder : wtx_folders) {
+			numberOfDOCTagIndexing = 0;
+			numberOfFilesIndexing = 0;
+
 			if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())) {
+
 				if (numberOfFolderUsing < numberOfFoldersToUse) {
 					System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
 					String[] sub_directories = new File(path_to_trec + symbol + wtx_folder).list();
@@ -205,10 +214,15 @@ public class Clustering
 							while (docno_m.find()) {
 								if (numberOfDOCTagIndexing < numberOfDOCTagsToIndexInONEFile) {
 									String doc_no = docno_m.group(2);
-									System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
+									//System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
 									String doc_content = docno_m.group(3);
 									
+									org.apache.lucene.document.Document doc = new org.apache.lucene.document.Document();
+
 									this.documents.add(new Document(doc_no, doc_content, doc_content));
+						            doc.add(new TextField("content", doc_content, Store.YES));
+						            doc.add(new TextField("title", doc_no, Store.YES));
+						            indexWriter.addDocument(doc);
 								}
 								numberOfDOCTagIndexing += 1;
 							}
@@ -219,9 +233,73 @@ public class Clustering
 					numberOfFolderUsing += 1;
 				}
 			}
-		}            
+		} 
+		indexWriter.close();
+		return index;
 	}
+	
+	public ArrayList<org.apache.lucene.document.Document> searchForDocuments(String searchString, Directory index)
+	{
+		ArrayList<org.apache.lucene.document.Document> searchResults = new ArrayList<org.apache.lucene.document.Document>();
+
+		try {
+			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+			Query query = new QueryParser(Version.LUCENE_46, "content", analyzer).parse(searchString);
+
+			IndexReader indexReader = DirectoryReader.open(index);
+			IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+			TopScoreDocCollector collector = TopScoreDocCollector.create(99, true);
+			indexSearcher.search(query, collector);
+			ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+			for (int i = 0; i < hits.length; ++i) {
+				int docId = hits[i].doc;
+				org.apache.lucene.document.Document document = indexSearcher.doc(docId);
+				searchResults.add(document);
+			}
+			
+			indexReader.close();
+		} catch (Exception e) {
+
+		}
+		return searchResults;
+	}
+
+	public ArrayList<ArrayList<org.apache.lucene.document.Document>> startClusteringWithResults(ArrayList<org.apache.lucene.document.Document> results, String query)
+	{
+		ArrayList<ArrayList<org.apache.lucene.document.Document>> searchResultClustersCreatedFromQuery = new ArrayList<ArrayList<org.apache.lucene.document.Document>>();
+		//Convert the collection of Lucene documents to Carrot2 documents.
+		ArrayList<Document> convertedResults = new ArrayList<Document>();
+		for (org.apache.lucene.document.Document luceneDocument : results) {
+			convertedResults.add(new Document(luceneDocument.get("title"), luceneDocument.get("content"), luceneDocument.get("content")));
+		}
 		
+        Controller controller = ControllerFactory.createSimple();
+        
+        ProcessingResult byTopicClusters = controller.process(documents, query, STCClusteringAlgorithm.class);
+        
+        List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
+
+        for (Cluster cluster : clustersByTopic) {
+            List<Document> carrot2ClusterDocumentsList = cluster.getAllDocuments();
+            ArrayList<org.apache.lucene.document.Document> luceneDocumentClustersList = new ArrayList<org.apache.lucene.document.Document>();            		
+
+            for (Document document : carrot2ClusterDocumentsList) {
+            	FieldType type = new FieldType();
+        		type.setIndexed(true);
+        		type.setStored(true);
+        		type.setStoreTermVectors(true);
+
+                org.apache.lucene.document.Document luceneDocument = new org.apache.lucene.document.Document();
+                luceneDocument.add(new Field("body", document.getContentUrl(), type));
+                luceneDocument.add(new Field("title", document.getTitle(), type));
+                luceneDocumentClustersList.add(luceneDocument);
+			}
+            searchResultClustersCreatedFromQuery.add(luceneDocumentClustersList);
+		}
+        return searchResultClustersCreatedFromQuery;
+	}
+	
 	public void startClusteringWithQuery(String query)
     {
     	try{    
@@ -232,22 +310,7 @@ public class Clustering
             final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
             
             System.out.println("Number of Clusters Made: " + clustersByTopic.size());
-            
-//            Cluster firstCluster = clustersByTopic.get(0);
-//            List<Document> documentsOfFirstCluster = firstCluster.getDocuments();
-            
-//            for (Document document : documentsOfFirstCluster)
-//            {
-//                System.out.println(document.getScore());
-//            }
-            
-            /* Perform clustering by domain. In this case query is not useful, hence it is null. */
-            //final ProcessingResult byDomainClusters = controller.process(documents, null, ByUrlClusteringAlgorithm.class);
-            //final List<Cluster> clustersByDomain = byDomainClusters.getClusters();
-            // [[[end:clustering-document-list]]]
-            
-            //ConsoleFormatter.displayClusters(clustersByTopic);
-            
+                                    
             Iterator<Cluster> clustersByTopicIterator = clustersByTopic.iterator();
             
             //iterating through all clusters

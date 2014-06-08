@@ -70,7 +70,7 @@ public class TrecIndexer {
 
 			// Searching code
 			int hitsPerPage = 10;
-			IndexReader reader = DirectoryReader.open(this.index);
+				IndexReader reader = DirectoryReader.open(this.index);
 			IndexSearcher indexSearcher = new IndexSearcher(reader);
 			TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
 			indexSearcher.search(query, collector);
@@ -171,7 +171,7 @@ public class TrecIndexer {
 							             * We will create Lucene documents with searchable "fullContent" field and "title", 
 							             * "url" and "snippet" fields for clustering.
 							             */
-							            doc.add(new TextField("fullContent", doc_content, Store.NO));
+							            doc.add(new TextField("content", doc_content, Store.YES));
 							            doc.add(new TextField("title", doc_no, Store.YES));
 							            indexWriter.addDocument(doc);
 									}
