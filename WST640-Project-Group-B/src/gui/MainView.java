@@ -109,7 +109,6 @@ public class MainView extends JFrame implements DocumentListener {
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clustering.getClustersWithLuceneDocuments());
 		for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
 			System.out.println("******Cluster******");
-//			System.out.println(termCluster);
 			Iterator iterator = termCluster.iterator();
 			int counter = 0;
 			while (counter < 3) {
