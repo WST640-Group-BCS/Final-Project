@@ -18,7 +18,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,12 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.standard.StandardTokenizer;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
@@ -185,7 +179,7 @@ public class Clustering
 		for (String wtx_folder : wtx_folders) {
 			if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())) {
 				if (numberOfFolderUsing < numberOfFoldersToUse) {
-					//System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
+					System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
 					String[] sub_directories = new File(path_to_trec + symbol + wtx_folder).list();
 					for (String sub_directory : sub_directories) 
 					{
@@ -196,13 +190,13 @@ public class Clustering
 
 							File sub_file = new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory);
 							
-							//System.out.println("Using the specific path: " + sub_file.getAbsolutePath());
+							System.out.println("Using the specific path: " + sub_file.getAbsolutePath());
 							BufferedReader bufferedReader;
 							bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
 							String content;
 							
-							//System.out.println("Indexing the specific file: " + 
-							//new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
+							System.out.println("Indexing the specific file: " + 
+							new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
 
 							while ((content = bufferedReader.readLine()) != null) {
 								builder.append(content);
@@ -218,7 +212,7 @@ public class Clustering
 							while (docno_m.find()) {
 								if (numberOfDOCTagIndexing < numberOfDOCTagsToIndexInONEFile) {
 									String doc_no = docno_m.group(2);
-									//System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
+									System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
 									String doc_content = docno_m.group(3);
 									
 									this.documents.add(new Document(doc_no, doc_content, doc_content));
@@ -326,30 +320,10 @@ public class Clustering
             		type.setStoreTermVectors(true);
             		
             		org.apache.lucene.document.Document doc_to_insert = new org.apache.lucene.document.Document();
-                    
-                    TokenStream tokenStream = new StandardTokenizer(Version.LUCENE_46, new StringReader(doc.getContentUrl()));
-                    CharArraySet stopSet = StandardAnalyzer.STOP_WORDS_SET;
-                    stopSet.add("1.0");
-                    stopSet.add("200");
-                    tokenStream = new StopFilter(Version.LUCENE_46, tokenStream, stopSet);
-                    
-                    OffsetAttribute offsetAttribute = tokenStream.addAttribute(OffsetAttribute.class);
-                    CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
-
-                    tokenStream.reset();
-                    System.out.println("ses111");
-                    while (tokenStream.incrementToken()) {
-                        int startOffset = offsetAttribute.startOffset();
-                        int endOffset = offsetAttribute.endOffset();
-                        String term = charTermAttribute.toString();
-                        System.out.println("ses" + term);
-                    }
-
                     Field field = new Field("body", doc.getContentUrl(), type);
                     doc_to_insert.add(field);
                     doc_to_insert.add(new Field("title", doc.getTitle(), type));
                     cluster_documents_list.add(doc_to_insert);
-
                 }
                 this.clustersWithLuceneDocuments.add(cluster_documents_list);
              }
