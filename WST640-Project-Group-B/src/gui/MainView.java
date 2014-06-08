@@ -111,7 +111,7 @@ public class MainView extends JFrame implements DocumentListener {
 			System.out.println("******Cluster******");
 			Iterator iterator = termCluster.iterator();
 			int counter = 0;
-			while (counter < 3) {
+			while (counter < 10) {
 				Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
 				System.out.println(entry);
 				counter += 1;
