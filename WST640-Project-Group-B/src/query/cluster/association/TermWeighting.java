@@ -5,12 +5,15 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexWriter;
@@ -34,41 +37,23 @@ public class TermWeighting {
 	
 	public int calculateDocumentScoreAccordingToQuery(String query, String documentTitle)
 	{
-		
 		return 0;
 	}
 	
-	public static void main(String[] args) {
-		ArrayList<Document> documents = new ArrayList<>();
-		
-		//What is this?
-		FieldType type = new FieldType();
-		type.setIndexed(true);
-		type.setStored(true);
-		type.setStoreTermVectors(true);
-		
-		
-		Document doc1 = new Document();
-        Field field = new Field("body", "content 1 this is the hej text new text", type);
-        doc1.add(field);
-        documents.add(doc1);
-        Document doc2 = new Document();
-        Field field2 = new Field("body", "content 2 Benjamin hej hej hej text", type);
-        doc2.add(field2);
-        documents.add(doc2);
-        Document doc3 = new Document();
-        Field field3 = new Field("body", "content 2 speciel speciel speciel speciel speciel hej hej hej text", type);
-        doc3.add(field3);
-        documents.add(doc3);
-         
-		TreeMap<String, Float> idf_weights = get_important_words(documents, "idf");
-		System.out.println(entriesSortedByValues(idf_weights));
-		
-		TreeMap<String, Float> tf_weights = get_important_words(documents, "tf");
-		System.out.println(entriesSortedByValues(tf_weights));
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments) {		
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();  
+		for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
+//			TreeMap<String, Float> idf_weights = get_important_words(cluster, "idf");
+//			termClustersList.add(idf_weights);
+			TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf");
+			NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
+
+			termClustersList.add(set);
+		}
+		return termClustersList;
 	}
 	
-	public static TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
+	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
 
 	    TreeMap<String, Float> idf_weights = new TreeMap<>();
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
@@ -79,6 +64,7 @@ public class TermWeighting {
 			Reader reader = new FileReader(stopwords.getAbsolutePath());
 			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
 			
+
 			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
 			
@@ -119,10 +105,10 @@ public class TermWeighting {
 		return null;
 	}
 	
-	static <K,V extends Comparable<? super V>> SortedSet<Map.Entry<K,V>> entriesSortedByValues(Map<K,V> map) {
-        SortedSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
+	static <K,V extends Comparable<? super V>> NavigableSet<Map.Entry<K,V>> entriesSortedByValues(Map<K,V> map) {
+		NavigableSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
             new Comparator<Map.Entry<K,V>>() {
-                @Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
+                @Override public int compare(Map.Entry<K,V> e2, Map.Entry<K,V> e1) {
                     int res = e1.getValue().compareTo(e2.getValue());
                     return res != 0 ? res : 1; // Special fix to preserve items with equal values
                 }
@@ -132,5 +118,102 @@ public class TermWeighting {
         return sortedEntries;
     }
 	
-	
+	public CharArraySet getStopwords()
+	{
+		CharArraySet luceneStopwords = new CharArraySet(Version.LUCENE_46, 20, true); 
+		luceneStopwords.add("1.0");
+		luceneStopwords.add("200");
+		luceneStopwords.add("80");
+		luceneStopwords.add("000001");
+		luceneStopwords.add("text");
+		luceneStopwords.add("a");
+		luceneStopwords.add("and");
+		luceneStopwords.add("body");
+		luceneStopwords.add("doc");
+		luceneStopwords.add("dochdr");
+		luceneStopwords.add("docoldno");
+		luceneStopwords.add("for");
+		luceneStopwords.add("html");
+		luceneStopwords.add("http");
+		luceneStopwords.add("ia001");
+		luceneStopwords.add("the");
+		luceneStopwords.add("to");
+		luceneStopwords.add("type");
+		luceneStopwords.add("01");
+		luceneStopwords.add("head");
+		luceneStopwords.add("in");
+		luceneStopwords.add("of");
+		luceneStopwords.add("p");
+		luceneStopwords.add("title");
+		luceneStopwords.add("on");
+		luceneStopwords.add("by");
+		luceneStopwords.add("is");
+		luceneStopwords.add("as");
+		luceneStopwords.add("with");
+		luceneStopwords.add("an");
+		luceneStopwords.add("length");
+		luceneStopwords.add("this");
+		luceneStopwords.add("at");
+		luceneStopwords.add("from");
+		luceneStopwords.add("modified");
+		luceneStopwords.add("are");
+		luceneStopwords.add("be");
+		luceneStopwords.add("57.0");
+		luceneStopwords.add("center");
+		luceneStopwords.add("have");
+		luceneStopwords.add("or");
+		luceneStopwords.add("their");
+		luceneStopwords.add("b");
+		luceneStopwords.add("gmt");
+		luceneStopwords.add("src");
+		luceneStopwords.add("or");
+		luceneStopwords.add("doctype");
+		luceneStopwords.add("or");
+		luceneStopwords.add("href");
+		luceneStopwords.add("dtd");
+		luceneStopwords.add("en");
+		luceneStopwords.add("gmtcontent");
+		luceneStopwords.add("htmlcontent");
+		luceneStopwords.add("img");
+		luceneStopwords.add("okserver");
+		luceneStopwords.add("000000");
+		luceneStopwords.add("that");
+		luceneStopwords.add("has");
+		luceneStopwords.add("which");
+		luceneStopwords.add("i");
+		luceneStopwords.add("it");
+		luceneStopwords.add("2");
+		luceneStopwords.add("name");
+		luceneStopwords.add("other");
+		luceneStopwords.add("also");
+		luceneStopwords.add("more");
+		luceneStopwords.add("will");
+		luceneStopwords.add("all");
+		luceneStopwords.add("1");
+		luceneStopwords.add("jan");
+		luceneStopwords.add("br");
+		luceneStopwords.add("size");
+		luceneStopwords.add("3");
+		luceneStopwords.add("5");
+		luceneStopwords.add("if");
+		luceneStopwords.add("00");
+		luceneStopwords.add("netscape");
+		luceneStopwords.add("1.0.1content");
+		luceneStopwords.add("1996");
+		luceneStopwords.add("1997");
+		luceneStopwords.add("hr");
+		luceneStopwords.add("gmtserver");
+		luceneStopwords.add("okdate");
+		luceneStopwords.add("gif");
+		luceneStopwords.add("aads");
+		luceneStopwords.add("apache");
+		luceneStopwords.add("font");
+		luceneStopwords.add("ul");
+		luceneStopwords.add("banner.gif");
+		luceneStopwords.add("35.1.1.47");
+		luceneStopwords.add("content");
+
+
+		return luceneStopwords;
+	}
 }

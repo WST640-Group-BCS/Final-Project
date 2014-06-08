@@ -6,6 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NavigableSet;
+import java.util.SortedSet;
+import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,6 +21,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.store.Directory;
 import org.w3c.dom.events.DocumentEvent;
 
+import query.cluster.association.TermWeighting;
 import clustering.Clustering;
 import indexer.TrecIndexer;
 
@@ -27,6 +33,8 @@ public class MainView extends JFrame implements DocumentListener {
 	final JLabel secondClusterResultsTextArea;
 	final JLabel thirdClusterResultsTextArea;
 	private static Clustering clustering;
+	
+	private static ArrayList<Directory> clusterIndexes;
 	
 	public JTextField getSearchField()
 	{
@@ -94,14 +102,30 @@ public class MainView extends JFrame implements DocumentListener {
 //		System.out.println(indexTrec.search("william"));
 		clustering = new Clustering();
 		clustering.startIndexing();
+		clustering.createClustersWithoutQuery();
+		clusterIndexes = clustering.createLuceneIndexesFromClusters();
+		
+		TermWeighting termWeighting = new TermWeighting();
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clustering.getClustersWithLuceneDocuments());
+		for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
+			System.out.println("******Cluster******");
+//			System.out.println(termCluster);
+			Iterator iterator = termCluster.iterator();
+			int counter = 0;
+			while (counter < 3) {
+				Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
+				System.out.println(entry);
+				counter += 1;
+			}
+		}
 	}
 	public void typed()
 	{
 	  String valueTypedByUser = searchField.getText();
-	  clustering.startClusteringWithQuery(valueTypedByUser);
-	  //for (String string : searchResult) {
-		
-	//}
+	  //clustering.startClusteringWithQuery(valueTypedByUser);
+
+	  clustering.searchClustersFromGeneratedLuceneClusters(valueTypedByUser, clusterIndexes);
+	  
 	  firstClusterResultsTextArea.setText("Result from first cluster");
 	  secondClusterResultsTextArea.setText("Result from second cluster");
 	  thirdClusterResultsTextArea.setText("Result from third cluster");
