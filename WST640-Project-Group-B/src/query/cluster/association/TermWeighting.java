@@ -2,7 +2,9 @@ package query.cluster.association;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -31,41 +33,23 @@ public class TermWeighting {
 	
 	public int calculateDocumentScoreAccordingToQuery(String query, String documentTitle)
 	{
-		
 		return 0;
 	}
 	
-	public static void main(String[] args) {
-		ArrayList<Document> documents = new ArrayList<>();
-		
-		//What is this?
-		FieldType type = new FieldType();
-		type.setIndexed(true);
-		type.setStored(true);
-		type.setStoreTermVectors(true);
-		
-		
-		Document doc1 = new Document();
-        Field field = new Field("body", "content 1 this is the hej text new text", type);
-        doc1.add(field);
-        documents.add(doc1);
-        Document doc2 = new Document();
-        Field field2 = new Field("body", "content 2 Benjamin hej hej hej text", type);
-        doc2.add(field2);
-        documents.add(doc2);
-        Document doc3 = new Document();
-        Field field3 = new Field("body", "content 2 speciel speciel speciel speciel speciel hej hej hej text", type);
-        doc3.add(field3);
-        documents.add(doc3);
-         
-		TreeMap<String, Float> idf_weights = get_important_words(documents, "idf");
-		System.out.println(entriesSortedByValues(idf_weights));
-		
-		TreeMap<String, Float> tf_weights = get_important_words(documents, "tf");
-		System.out.println(entriesSortedByValues(tf_weights));
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments) {		
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();  
+		for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
+//			TreeMap<String, Float> idf_weights = get_important_words(cluster, "idf");
+//			termClustersList.add(idf_weights);
+			TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf");
+			NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
+
+			termClustersList.add(set);
+		}
+		return termClustersList;
 	}
 	
-	public static TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
+	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
 
 	    TreeMap<String, Float> idf_weights = new TreeMap<>();
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
@@ -113,10 +97,10 @@ public class TermWeighting {
 		return null;
 	}
 	
-	static <K,V extends Comparable<? super V>> SortedSet<Map.Entry<K,V>> entriesSortedByValues(Map<K,V> map) {
-        SortedSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
+	static <K,V extends Comparable<? super V>> NavigableSet<Map.Entry<K,V>> entriesSortedByValues(Map<K,V> map) {
+		NavigableSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
             new Comparator<Map.Entry<K,V>>() {
-                @Override public int compare(Map.Entry<K,V> e1, Map.Entry<K,V> e2) {
+                @Override public int compare(Map.Entry<K,V> e2, Map.Entry<K,V> e1) {
                     int res = e1.getValue().compareTo(e2.getValue());
                     return res != 0 ? res : 1; // Special fix to preserve items with equal values
                 }

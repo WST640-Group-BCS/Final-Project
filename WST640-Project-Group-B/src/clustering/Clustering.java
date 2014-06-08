@@ -18,6 +18,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -25,14 +26,27 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.core.StopFilter;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.analysis.standard.StandardTokenizer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TopScoreDocCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
@@ -66,28 +80,69 @@ public class Clustering
 	
 	public ArrayList<ArrayList<org.apache.lucene.document.Document>> getClustersWithLuceneDocuments()
 	{
-		return clustersWithLuceneDocuments;
+		return this.clustersWithLuceneDocuments;
 	}
 	
-	public ArrayList<Directory> createLuceneIndexesFromClusters() throws IOException
+	public ArrayList<Directory> createLuceneIndexesFromClusters() 
 	{
 		ArrayList<Directory> clusterIndexes = new ArrayList<Directory>();		
-		
-		for (ArrayList<org.apache.lucene.document.Document> cluster : this.clustersWithLuceneDocuments) {
-			
-			Directory index = new RAMDirectory();
+		try {
+			for (ArrayList<org.apache.lucene.document.Document> cluster : this.clustersWithLuceneDocuments) {
+				Directory index = new RAMDirectory();
+				CharArraySet luceneStopwords = new CharArraySet(Version.LUCENE_46, 20, true); 
+				luceneStopwords.add("1.0");
+				luceneStopwords.add("200");
+				luceneStopwords.add("80");
+				luceneStopwords.add("000001");
+				luceneStopwords.add("text");
 
-			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
-			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
-			IndexWriter indexWriter = new IndexWriter(index, config);
+				StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46, luceneStopwords);
+				IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
+				IndexWriter indexWriter = new IndexWriter(index, config);
 
-			for (org.apache.lucene.document.Document document : cluster) {
-				indexWriter.addDocument(document);
-			}
-			clusterIndexes.add(index);
-			indexWriter.close();
-		}	
+				for (org.apache.lucene.document.Document document : cluster) {
+					indexWriter.addDocument(document);
+				}
+				clusterIndexes.add(index);
+				indexWriter.close();
+			}	
+
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 		return clusterIndexes;
+	}
+	
+	public ArrayList<ArrayList<org.apache.lucene.document.Document>> searchClustersFromGeneratedLuceneClusters(String searchString, ArrayList<Directory> indexes)
+	{
+		ArrayList<ArrayList<org.apache.lucene.document.Document>> clusterResults = new ArrayList<ArrayList<org.apache.lucene.document.Document>>();
+		try {
+			for (Directory index : indexes) {
+				StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+				Query query = new QueryParser(Version.LUCENE_46, "body", analyzer).parse(searchString);
+
+				int hitsPerPage = 5;
+				IndexReader indexReader = DirectoryReader.open(index);
+				IndexSearcher indexSearcher = new IndexSearcher(indexReader);
+				TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage, true);
+				indexSearcher.search(query, collector);
+				ScoreDoc[] hits = collector.topDocs().scoreDocs;
+
+				ArrayList<org.apache.lucene.document.Document> documentsHit = new ArrayList<org.apache.lucene.document.Document>();
+				for (int i = 0; i < hits.length; ++i) {
+					int docId = hits[i].doc;
+					System.out.println(hits[i].score);
+					org.apache.lucene.document.Document document = indexSearcher.doc(docId);
+					documentsHit.add(document);
+				}
+				clusterResults.add(documentsHit);
+
+				indexReader.close();
+			}
+		} catch (Exception e) {
+
+		}
+		return clusterResults;
 	}
 	
 	public Clustering()
@@ -130,7 +185,7 @@ public class Clustering
 		for (String wtx_folder : wtx_folders) {
 			if ((new File(path_to_trec + symbol + wtx_folder).isDirectory())) {
 				if (numberOfFolderUsing < numberOfFoldersToUse) {
-					System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
+					//System.out.println("Using the folder: " + new File(path_to_trec + symbol + wtx_folder).getName());
 					String[] sub_directories = new File(path_to_trec + symbol + wtx_folder).list();
 					for (String sub_directory : sub_directories) 
 					{
@@ -141,13 +196,13 @@ public class Clustering
 
 							File sub_file = new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory);
 							
-							System.out.println("Using the specific path: " + sub_file.getAbsolutePath());
+							//System.out.println("Using the specific path: " + sub_file.getAbsolutePath());
 							BufferedReader bufferedReader;
 							bufferedReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
 							String content;
 							
-							System.out.println("Indexing the specific file: " + 
-							new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
+							//System.out.println("Indexing the specific file: " + 
+							//new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
 
 							while ((content = bufferedReader.readLine()) != null) {
 								builder.append(content);
@@ -163,7 +218,7 @@ public class Clustering
 							while (docno_m.find()) {
 								if (numberOfDOCTagIndexing < numberOfDOCTagsToIndexInONEFile) {
 									String doc_no = docno_m.group(2);
-									System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
+									//System.out.println("Indexing a <DOC> tag, with the title: " + doc_no);
 									String doc_content = docno_m.group(3);
 									
 									this.documents.add(new Document(doc_no, doc_content, doc_content));
@@ -178,7 +233,6 @@ public class Clustering
 				}
 			}
 		}            
-
 	}
 		
 	public void startClusteringWithQuery(String query)
@@ -227,6 +281,7 @@ public class Clustering
             		org.apache.lucene.document.Document doc_to_insert = new org.apache.lucene.document.Document();
                     Field field = new Field("body", doc.getContentUrl(), type);
                     doc_to_insert.add(field);
+                    doc_to_insert.add(new Field("title", doc.getTitle(), type));
                     cluster_documents_list.add(doc_to_insert);
                 }
                 this.clustersWithLuceneDocuments.add(cluster_documents_list);
@@ -237,6 +292,67 @@ public class Clustering
             //ConsoleFormatter.displayClusters(clustersByDomain);
        
 
+    	} catch (Exception e) {
+    		
+    	}
+    }
+	
+	public void createClustersWithoutQuery()
+    {
+    	try{    
+            final Controller controller = ControllerFactory.createSimple();
+                        
+            final ProcessingResult byTopicClusters = controller.process(documents, null, STCClusteringAlgorithm.class);
+            
+            final List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
+            
+            System.out.println("Number of Clusters Made: " + clustersByTopic.size());
+                        
+            Iterator<Cluster> clustersByTopicIterator = clustersByTopic.iterator();
+            
+            //iterating through all clusters
+            this.clustersWithLuceneDocuments = new ArrayList<ArrayList<org.apache.lucene.document.Document>>();  
+            while(clustersByTopicIterator.hasNext()) {
+            	System.out.println(clustersByTopicIterator.next());
+                Cluster cluster = (Cluster) clustersByTopicIterator.next();
+                List<Document> document_clusters = cluster.getAllDocuments();
+                
+                ArrayList<org.apache.lucene.document.Document> cluster_documents_list = new ArrayList<>();
+                for(Document doc: document_clusters){
+                	
+                	FieldType type = new FieldType();
+            		type.setIndexed(true);
+            		type.setStored(true);
+            		type.setStoreTermVectors(true);
+            		
+            		org.apache.lucene.document.Document doc_to_insert = new org.apache.lucene.document.Document();
+                    
+                    TokenStream tokenStream = new StandardTokenizer(Version.LUCENE_46, new StringReader(doc.getContentUrl()));
+                    CharArraySet stopSet = StandardAnalyzer.STOP_WORDS_SET;
+                    stopSet.add("1.0");
+                    stopSet.add("200");
+                    tokenStream = new StopFilter(Version.LUCENE_46, tokenStream, stopSet);
+                    
+                    OffsetAttribute offsetAttribute = tokenStream.addAttribute(OffsetAttribute.class);
+                    CharTermAttribute charTermAttribute = tokenStream.addAttribute(CharTermAttribute.class);
+
+                    tokenStream.reset();
+                    System.out.println("ses111");
+                    while (tokenStream.incrementToken()) {
+                        int startOffset = offsetAttribute.startOffset();
+                        int endOffset = offsetAttribute.endOffset();
+                        String term = charTermAttribute.toString();
+                        System.out.println("ses" + term);
+                    }
+
+                    Field field = new Field("body", doc.getContentUrl(), type);
+                    doc_to_insert.add(field);
+                    doc_to_insert.add(new Field("title", doc.getTitle(), type));
+                    cluster_documents_list.add(doc_to_insert);
+
+                }
+                this.clustersWithLuceneDocuments.add(cluster_documents_list);
+             }
     	} catch (Exception e) {
     		
     	}
