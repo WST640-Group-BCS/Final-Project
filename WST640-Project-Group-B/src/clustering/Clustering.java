@@ -25,11 +25,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.util.Version;
 import org.carrot2.clustering.kmeans.BisectingKMeansClusteringAlgorithm;
 import org.carrot2.clustering.lingo.LingoClusteringAlgorithm;
 import org.carrot2.clustering.stc.STCClusteringAlgorithm;
@@ -63,9 +69,25 @@ public class Clustering
 		return clustersWithLuceneDocuments;
 	}
 	
-	public void createLuceneIndexFromClusters()
+	public ArrayList<Directory> createLuceneIndexesFromClusters() throws IOException
 	{
+		ArrayList<Directory> clusterIndexes = new ArrayList<Directory>();		
 		
+		for (ArrayList<org.apache.lucene.document.Document> cluster : this.clustersWithLuceneDocuments) {
+			
+			Directory index = new RAMDirectory();
+
+			StandardAnalyzer analyzer = new StandardAnalyzer(Version.LUCENE_46);
+			IndexWriterConfig config = new IndexWriterConfig(Version.LUCENE_46, analyzer);
+			IndexWriter indexWriter = new IndexWriter(index, config);
+
+			for (org.apache.lucene.document.Document document : cluster) {
+				indexWriter.addDocument(document);
+			}
+			clusterIndexes.add(index);
+			indexWriter.close();
+		}	
+		return clusterIndexes;
 	}
 	
 	public Clustering()
@@ -185,7 +207,7 @@ public class Clustering
             
             //ConsoleFormatter.displayClusters(clustersByTopic);
             
-            Iterator clustersByTopicIterator = clustersByTopic.iterator();
+            Iterator<Cluster> clustersByTopicIterator = clustersByTopic.iterator();
             
             //iterating through all clusters
             this.clustersWithLuceneDocuments = new ArrayList<ArrayList<org.apache.lucene.document.Document>>();  
