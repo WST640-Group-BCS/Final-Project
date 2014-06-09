@@ -54,7 +54,6 @@ import org.carrot2.core.ControllerFactory;
 import org.carrot2.core.Document;
 import org.carrot2.core.IDocumentSource;
 import org.carrot2.core.ProcessingResult;
-import org.carrot2.examples.ConsoleFormatter;
 
 /**
  * This example shows how to cluster a set of documents available as an {@link ArrayList}.

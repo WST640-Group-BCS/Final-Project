@@ -118,7 +118,11 @@ public class MainView extends JFrame implements DocumentListener {
 	public void typed()
 	{
 		/*
-		 * 
+		 * Get the current text from the search field and start searching for relevant documents.
+		 * When the relevant documents are retrieved, start using Carrot2 to cluster the documents
+		 * in relation to the query. 
+		 * When the clusters are found, calculate TFIDF for each term in the clusters, and show 
+		 * them to the user.
 		 */
 		String searchString = searchField.getText();
 		if (searchString.length() > 2) {
