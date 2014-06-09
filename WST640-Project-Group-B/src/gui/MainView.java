@@ -120,7 +120,7 @@ public class MainView extends JFrame implements DocumentListener {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         System.out.print("Enter search query, press enter for suggestions: ");
         String s = br.readLine();
-        System.out.print("Finding suggestions for " + s);
+        System.out.println("Finding suggestions for " + s);
         get_suggestions(s);
         
         
@@ -153,6 +153,7 @@ public class MainView extends JFrame implements DocumentListener {
 			
 			long clusteringStartTime = System.currentTimeMillis();
 			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
+			
 			long clusteringStopTime = System.currentTimeMillis();
 			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
 			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
@@ -200,6 +201,7 @@ public class MainView extends JFrame implements DocumentListener {
 			
 			long clusteringStartTime = System.currentTimeMillis();
 			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
+			System.out.println("Found " + clusteringResults.size() + " clusters");
 			long clusteringStopTime = System.currentTimeMillis();
 			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
 			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
