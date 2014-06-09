@@ -101,8 +101,9 @@ public class MainView extends JFrame implements DocumentListener {
 		//Document document = searchResult.get(0);
 		//System.out.println(searchResult.get(0).getField("fullContent"));
 //		System.out.println(indexTrec.search("william"));
+		
 		clustering = new Clustering();
-		luceneIndex = clustering.startIndexing();
+		luceneIndex = clustering.startLuceneIndexing();
 		
 //		clustering.createClustersWithoutQuery();
 //		clusterIndexes = clustering.createLuceneIndexesFromClusters();

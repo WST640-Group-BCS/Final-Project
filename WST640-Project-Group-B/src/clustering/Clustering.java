@@ -137,7 +137,7 @@ public class Clustering
 		
 	}
 	
-	public Directory startIndexing() throws FileNotFoundException, IOException
+	public Directory startLuceneIndexing() throws FileNotFoundException, IOException
 	{
         this.documents = new ArrayList<Document>();
         
