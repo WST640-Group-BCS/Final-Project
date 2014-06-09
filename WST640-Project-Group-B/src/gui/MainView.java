@@ -102,6 +102,9 @@ public class MainView extends JFrame implements DocumentListener {
 		//System.out.println(searchResult.get(0).getField("fullContent"));
 //		System.out.println(indexTrec.search("william"));
 		
+		/*
+		 * Create a new Clustering object and start the lucene indexing. 
+		 */
 		clustering = new Clustering();
 		luceneIndex = clustering.startLuceneIndexing();
 		
@@ -109,8 +112,15 @@ public class MainView extends JFrame implements DocumentListener {
 //		clusterIndexes = clustering.createLuceneIndexesFromClusters();
 //		
 	}
+	
+	/*
+	 * Invoked whenever the user types in the search field.
+	 */
 	public void typed()
 	{
+		/*
+		 * 
+		 */
 		String searchString = searchField.getText();
 		if (searchString.length() > 2) {
 			ArrayList<Document> documentsResults = clustering.searchForDocuments(searchString, luceneIndex);
