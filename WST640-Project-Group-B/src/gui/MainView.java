@@ -165,8 +165,6 @@ public class MainView extends JFrame implements DocumentListener {
 			long calculateTFIDFStopTime = System.currentTimeMillis();
 			long calculateTFIDFElapsedTime = calculateTFIDFStopTime - calculateTFIDFStartTime;
 			System.out.println(calculateTFIDFElapsedTime + " milliseconds to calculate TFIDF for every term in every cluster");
-
-
 		}
 		
 	  //clustering.startClusteringWithQuery(valueTypedByUser);

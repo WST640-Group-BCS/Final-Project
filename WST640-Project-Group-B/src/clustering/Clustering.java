@@ -275,7 +275,7 @@ public class Clustering
 		
         Controller controller = ControllerFactory.createSimple();
         
-        ProcessingResult byTopicClusters = controller.process(documents, query, BisectingKMeansClusteringAlgorithm.class);
+        ProcessingResult byTopicClusters = controller.process(convertedResults, query, BisectingKMeansClusteringAlgorithm.class);
         
         List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
 
