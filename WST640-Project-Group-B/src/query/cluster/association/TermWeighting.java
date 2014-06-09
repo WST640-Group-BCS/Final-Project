@@ -40,17 +40,124 @@ public class TermWeighting {
 		return 0;
 	}
 	
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments) {		
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type) {		
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();  
-		for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
-//			TreeMap<String, Float> idf_weights = get_important_words(cluster, "idf");
-//			termClustersList.add(idf_weights);
-			TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf");
-			NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
-
-			termClustersList.add(set);
+		
+		if(term_weight_type == "tfidf"){
+			termClustersList = calculate_tfidf(clustersInLuceneDocuments);
+		}
+		else if(term_weight_type == "tf"){
+			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
+				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf");
+				NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
+	
+				termClustersList.add(set);
+			}
 		}
 		return termClustersList;
+	}
+	
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments){
+		
+		
+		TreeMap<String, Float> idf_weights = calculate_idf_weights(clustersInLuceneDocuments);
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>(); 
+		try {
+			for(ArrayList<org.apache.lucene.document.Document> cluster: clustersInLuceneDocuments){
+				//Calculating idf weights
+				Directory index = new RAMDirectory();
+				File stopwords = new File("src/stopwords.en");
+				Reader reader = new FileReader(stopwords.getAbsolutePath());
+				StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
+				IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
+				IndexWriter w = new IndexWriter(index, config);
+				//iterating through all documents in all clusters
+				
+				for (Document doc: cluster){
+		            w.addDocument(doc);
+				}
+				
+				float N = w.numDocs();
+				w.close();
+				
+				IndexReader index_reader = DirectoryReader.open(index);
+				
+			    //iterating through all terms in the collection
+			    LuceneDictionary ld = new LuceneDictionary( index_reader, "body" );
+			    BytesRefIterator iterator = ld.getEntryIterator();
+			    BytesRef byteRef = null;
+			    
+			    TreeMap<String, Float> term_tfidf = new TreeMap<String, Float>();
+			    
+			    while ((byteRef = iterator.next()) != null)
+			    {
+			        String term = byteRef.utf8ToString();
+			        float idf_weight = idf_weights.get(term);
+				    Term termInstance = new Term("body", term);
+				    long total_term_Freq = index_reader.totalTermFreq(termInstance);
+				    float number_of_documents = index_reader.numDocs();
+				    float tfidf_weight = (float) (1 + Math.log10(total_term_Freq/number_of_documents) * idf_weight);
+				    term_tfidf.put(term, tfidf_weight);
+				    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
+				}
+			    index_reader.close();
+		    
+				NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(term_tfidf);
+				termClustersList.add(set);
+			}
+		    
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return termClustersList;
+	}
+	
+	public TreeMap<String, Float> calculate_idf_weights(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments){
+		TreeMap<String, Float> term_idf = null;
+		try {
+			
+			//Calculating idf weights
+			Directory index = new RAMDirectory();
+			File stopwords = new File("src/stopwords.en");
+			Reader reader = new FileReader(stopwords.getAbsolutePath());
+			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
+			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
+			IndexWriter w = new IndexWriter(index, config);
+			//iterating through all documents in all clusters
+			for(ArrayList<org.apache.lucene.document.Document> cluster: clustersInLuceneDocuments){
+				for (Document doc: cluster){
+		            w.addDocument(doc);
+				}
+			}
+			float N = w.numDocs();
+			w.close();
+			
+			IndexReader index_reader = DirectoryReader.open(index);
+			
+		    //iterating through all terms in the collection
+		    LuceneDictionary ld = new LuceneDictionary( index_reader, "body" );
+		    BytesRefIterator iterator = ld.getEntryIterator();
+		    BytesRef byteRef = null;
+		    
+		    term_idf = new TreeMap<String, Float>();
+		    
+		    while ((byteRef = iterator.next()) != null)
+		    {
+		        String term = byteRef.utf8ToString();
+			    Term termInstance = new Term("body", term);
+			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
+			    float doc_freq = index_reader.docFreq(termInstance);
+			    float idf_weight = (float) Math.log10(N/doc_freq);
+			    term_idf.put(term, idf_weight);
+			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
+			}
+		    index_reader.close();
+		    
+		    
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return term_idf;
 	}
 	
 	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
@@ -60,7 +167,7 @@ public class TermWeighting {
 		try {
 			Directory index = new RAMDirectory();
 			
-			File stopwords = new File("src/stopwords.en");			
+			File stopwords = new File("src/stopwords.en");
 			Reader reader = new FileReader(stopwords.getAbsolutePath());
 			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
 			
@@ -85,7 +192,7 @@ public class TermWeighting {
 		    {
 		        String term = byteRef.utf8ToString();
 		        
-			    Term termInstance = new Term("body", term);      
+			    Term termInstance = new Term("body", term);
 			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
 			    float doc_freq = index_reader.docFreq(termInstance);
 			    df_weights.put(term, doc_freq);
