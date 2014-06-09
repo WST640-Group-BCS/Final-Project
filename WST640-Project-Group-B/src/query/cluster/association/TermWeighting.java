@@ -16,6 +16,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -30,6 +31,7 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
 
 
 public class TermWeighting {
@@ -58,8 +60,6 @@ public class TermWeighting {
 	}
 	
 	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments){
-		
-		
 		TreeMap<String, Float> idf_weights = calculate_idf_weights(clustersInLuceneDocuments);
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>(); 
 		try {
@@ -77,10 +77,10 @@ public class TermWeighting {
 		            w.addDocument(doc);
 				}
 				
-				float N = w.numDocs();
 				w.close();
 				
 				IndexReader index_reader = DirectoryReader.open(index);
+				float number_of_documents = index_reader.numDocs();
 				
 			    //iterating through all terms in the collection
 			    LuceneDictionary ld = new LuceneDictionary( index_reader, "body" );
@@ -95,10 +95,10 @@ public class TermWeighting {
 			        float idf_weight = idf_weights.get(term);
 				    Term termInstance = new Term("body", term);
 				    long total_term_Freq = index_reader.totalTermFreq(termInstance);
-				    float number_of_documents = index_reader.numDocs();
-				    float tfidf_weight = (float) (1 + Math.log10(total_term_Freq/number_of_documents) * idf_weight);
+				    
+				    float tfidf_weight = (float) ((1 + Math.log10(total_term_Freq)) * idf_weight);
 				    term_tfidf.put(term, tfidf_weight);
-				    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
+				    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq);  
 				}
 			    index_reader.close();
 		    
@@ -123,13 +123,23 @@ public class TermWeighting {
 			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
 			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
-			//iterating through all documents in all clusters
+			//iterating through all documents in all clusters to get df
 			for(ArrayList<org.apache.lucene.document.Document> cluster: clustersInLuceneDocuments){
+				StringBuilder builder = new StringBuilder();
 				for (Document doc: cluster){
-		            w.addDocument(doc);
+					builder.append(doc.get("body"));
 				}
+				FieldType type = new FieldType();
+        		type.setIndexed(true);
+        		type.setStored(true);
+        		type.setStoreTermVectors(true);
+
+                org.apache.lucene.document.Document luceneDocument = new org.apache.lucene.document.Document();
+                luceneDocument.add(new Field("body", builder.toString(), type));
+				w.addDocument(luceneDocument);
 			}
-			float N = w.numDocs();
+			
+			float N = clustersInLuceneDocuments.size();
 			w.close();
 			
 			IndexReader index_reader = DirectoryReader.open(index);
@@ -149,10 +159,9 @@ public class TermWeighting {
 			    float doc_freq = index_reader.docFreq(termInstance);
 			    float idf_weight = (float) Math.log10(N/doc_freq);
 			    term_idf.put(term, idf_weight);
-			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
+			    //System.out.println("term: " + term + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
 			}
 		    index_reader.close();
-		    
 		    
 		} catch (IOException e) {
 			e.printStackTrace();
