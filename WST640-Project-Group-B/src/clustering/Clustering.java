@@ -275,11 +275,12 @@ public class Clustering
 		
         Controller controller = ControllerFactory.createSimple();
         
-        ProcessingResult byTopicClusters = controller.process(convertedResults, query, BisectingKMeansClusteringAlgorithm.class);
+        ProcessingResult byTopicClusters = controller.process(convertedResults, query, STCClusteringAlgorithm.class);
         
         List<Cluster> clustersByTopic = byTopicClusters.getClusters();  
 
         for (Cluster cluster : clustersByTopic) {
+        	System.out.println(cluster.getScore());
             List<Document> carrot2ClusterDocumentsList = cluster.getAllDocuments();
             ArrayList<org.apache.lucene.document.Document> luceneDocumentClustersList = new ArrayList<org.apache.lucene.document.Document>();            		
 

@@ -151,7 +151,7 @@ public class MainView extends JFrame implements DocumentListener {
 			
 			long calculateTFIDFStartTime = System.currentTimeMillis();
 			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tfidf");
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tf");
 			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
 				System.out.println("******Cluster******");
 				Iterator iterator = termCluster.iterator();
