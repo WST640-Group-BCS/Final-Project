@@ -2,8 +2,10 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
@@ -93,7 +95,7 @@ public class MainView extends JFrame implements DocumentListener {
 	}
 
 	public static void main(String[] args) throws FileNotFoundException, IOException {
-		new MainView();
+		//new MainView();
 //		indexTrec = new TrecIndexer();
 //		Directory index = indexTrec.startIndexingFiles();
 //		ArrayList<Document> searchResult = indexTrec.search("william");
@@ -115,6 +117,13 @@ public class MainView extends JFrame implements DocumentListener {
 		long elapsedTime = stopTime - startTime;
 		System.out.println(elapsedTime / 1000 + " seconds to index");
 		
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.print("Enter search query, press enter for suggestions: ");
+        String s = br.readLine();
+        System.out.println("Finding suggestions for " + s);
+        get_suggestions(s);
+        
+        
 //		clustering.createClustersWithoutQuery();
 //		clusterIndexes = clustering.createLuceneIndexesFromClusters();
 //		
@@ -141,9 +150,10 @@ public class MainView extends JFrame implements DocumentListener {
 			long stopTime = System.currentTimeMillis();
 			long elapsedTime = stopTime - startTime;
 			System.out.println(elapsedTime + " milliseconds to search for relevant documents");
-
+			
 			long clusteringStartTime = System.currentTimeMillis();
 			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
+			
 			long clusteringStopTime = System.currentTimeMillis();
 			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
 			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
@@ -175,6 +185,52 @@ public class MainView extends JFrame implements DocumentListener {
 	  secondClusterResultsTextArea.setText("Result from second cluster");
 	  thirdClusterResultsTextArea.setText("Result from third cluster");
 	}
+	
+	public static void get_suggestions(String searchString){
+		//String searchString = searchField.getText();
+		if (searchString.length() > 2) {
+			long startTime = System.currentTimeMillis();
+
+			ArrayList<Document> documentsResults = clustering.searchForDocuments(searchString, luceneIndex);
+			
+			long stopTime = System.currentTimeMillis();
+			long elapsedTime = stopTime - startTime;
+			System.out.println(elapsedTime + " milliseconds to search for relevant documents");
+			
+			long clusteringStartTime = System.currentTimeMillis();
+			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
+			System.out.println("Found " + clusteringResults.size() + " clusters");
+			long clusteringStopTime = System.currentTimeMillis();
+			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
+			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
+
+			
+			long calculateTFIDFStartTime = System.currentTimeMillis();
+			TermWeighting termWeighting = new TermWeighting();
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tfidf");
+			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
+				System.out.println("******Cluster******");
+				Iterator iterator = termCluster.iterator();
+				int counter = 0;
+				while (counter < 10) {
+					Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
+					System.out.println(entry);
+					counter += 1;
+				}
+			}
+			long calculateTFIDFStopTime = System.currentTimeMillis();
+			long calculateTFIDFElapsedTime = calculateTFIDFStopTime - calculateTFIDFStartTime;
+			System.out.println(calculateTFIDFElapsedTime + " milliseconds to calculate TFIDF for every term in every cluster");
+
+
+		}
+		
+	  //clustering.startClusteringWithQuery(valueTypedByUser);
+
+	  //clustering.searchClustersFromGeneratedLuceneClusters(valueTypedByUser, clusterIndexes);
+	  
+	}
+	
 	@Override
 	public void insertUpdate(javax.swing.event.DocumentEvent e) {
 		this.typed();
