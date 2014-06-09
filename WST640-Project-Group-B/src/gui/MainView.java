@@ -45,7 +45,6 @@ public class MainView extends JFrame implements DocumentListener {
 	{
 		return this.firstClusterResultsTextArea;
 	}
-
 	
 	public MainView()
 	{
@@ -106,7 +105,7 @@ public class MainView extends JFrame implements DocumentListener {
 		clusterIndexes = clustering.createLuceneIndexesFromClusters();
 		
 		TermWeighting termWeighting = new TermWeighting();
-		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clustering.getClustersWithLuceneDocuments());
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clustering.getClustersWithLuceneDocuments(), "tfidf");
 		for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
 			System.out.println("******Cluster******");
 			Iterator iterator = termCluster.iterator();
