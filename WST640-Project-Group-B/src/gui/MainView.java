@@ -117,11 +117,14 @@ public class MainView extends JFrame implements DocumentListener {
 		long elapsedTime = stopTime - startTime;
 		System.out.println(elapsedTime / 1000 + " seconds to index");
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        System.out.print("Enter search query, press enter for suggestions: ");
-        String s = br.readLine();
-        System.out.println("Finding suggestions for " + s);
-        get_suggestions(s);
+		String inputString = "";
+		while(inputString != "exit"){
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	        System.out.print("Enter search query\nPress enter for suggestions: ");
+	        inputString = br.readLine();
+	        System.out.println("Finding suggestions for " + inputString);
+	        get_suggestions(inputString);
+		}
         
         
 //		clustering.createClustersWithoutQuery();
