@@ -164,7 +164,7 @@ public class MainView extends JFrame implements DocumentListener {
 			
 			long calculateTFIDFStartTime = System.currentTimeMillis();
 			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tf");
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tf", searchString);
 			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
 				System.out.println("******Cluster******");
 				Iterator iterator = termCluster.iterator();
@@ -207,10 +207,9 @@ public class MainView extends JFrame implements DocumentListener {
 			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
 			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
 
-			
 			long calculateTFIDFStartTime = System.currentTimeMillis();
 			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tfidf");
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tfidf", searchString);
 			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
 				System.out.println("******Cluster******");
 				Iterator iterator = termCluster.iterator();

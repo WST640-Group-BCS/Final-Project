@@ -33,6 +33,8 @@ import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 
+import querylogs.suggestions;
+
 
 public class TermWeighting {
 	static Version luceneVersion = Version.LUCENE_46;
@@ -42,15 +44,14 @@ public class TermWeighting {
 		return 0;
 	}
 	
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type) {		
-		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();  
-		
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString) {		
+		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();
 		if(term_weight_type == "tfidf"){
-			termClustersList = calculate_tfidf(clustersInLuceneDocuments);
+			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString);
 		}
 		else if(term_weight_type == "tf"){
 			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
-				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf");
+				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf", searchString);
 				NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
 	
 				termClustersList.add(set);
@@ -59,10 +60,12 @@ public class TermWeighting {
 		return termClustersList;
 	}
 	
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments){
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String searchString){
 		TreeMap<String, Float> idf_weights = calculate_idf_weights(clustersInLuceneDocuments);
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>(); 
 		try {
+			System.out.println("-- analyzing query logs --");
+			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
 			for(ArrayList<org.apache.lucene.document.Document> cluster: clustersInLuceneDocuments){
 				//Calculating idf weights
 				Directory index = new RAMDirectory();
@@ -89,15 +92,41 @@ public class TermWeighting {
 			    
 			    TreeMap<String, Float> term_tfidf = new TreeMap<String, Float>();
 			    
+			    float total_weight = 0;
+			    
+			    while ((byteRef = iterator.next()) != null)
+			    {
+			    	String term = byteRef.utf8ToString();
+			        float idf_weight = idf_weights.get(term);
+				    Term termInstance = new Term("body", term);
+				    long total_term_Freq = index_reader.totalTermFreq(termInstance);
+				    float tfidf_weight = (float) ((1 + Math.log10(total_term_Freq)) * idf_weight);
+				    total_weight += tfidf_weight;
+				}
+			    
+			    iterator = ld.getEntryIterator();
+			    byteRef = null;
+			    
 			    while ((byteRef = iterator.next()) != null)
 			    {
 			        String term = byteRef.utf8ToString();
 			        float idf_weight = idf_weights.get(term);
 				    Term termInstance = new Term("body", term);
 				    long total_term_Freq = index_reader.totalTermFreq(termInstance);
-				    
 				    float tfidf_weight = (float) ((1 + Math.log10(total_term_Freq)) * idf_weight);
-				    term_tfidf.put(term, tfidf_weight);
+				    float normalized_tfidf = tfidf_weight/total_weight;
+				    //normalizing scores
+				    
+			        try{
+			    		float query_log_score = query_log_treemap.get(term);
+			    		float query_log_tfidf_weight = normalized_tfidf + query_log_score/10;
+			    		System.out.println(term + " found, old score: " + normalized_tfidf + " new score: " + query_log_tfidf_weight);
+			    		term_tfidf.put(term, query_log_tfidf_weight);
+			    	}catch(Exception e){
+			    		//System.out.println(term + " not found");
+			    		term_tfidf.put(term, normalized_tfidf);
+			    	}
+				    
 				    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq);  
 				}
 			    index_reader.close();
@@ -114,6 +143,7 @@ public class TermWeighting {
 	
 	public TreeMap<String, Float> calculate_idf_weights(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments){
 		TreeMap<String, Float> term_idf = null;
+		
 		try {
 			
 			//Calculating idf weights
@@ -151,6 +181,7 @@ public class TermWeighting {
 		    
 		    term_idf = new TreeMap<String, Float>();
 		    
+		    
 		    while ((byteRef = iterator.next()) != null)
 		    {
 		        String term = byteRef.utf8ToString();
@@ -158,7 +189,8 @@ public class TermWeighting {
 			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
 			    float doc_freq = index_reader.docFreq(termInstance);
 			    float idf_weight = (float) Math.log10(N/doc_freq);
-			    term_idf.put(term, idf_weight);
+			    //
+			    term_idf.put(term, (float)idf_weight);
 			    //System.out.println("term: " + term + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
 			}
 		    index_reader.close();
@@ -169,8 +201,8 @@ public class TermWeighting {
 		return term_idf;
 	}
 	
-	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type){
-
+	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type, String searchString){
+		TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
 	    TreeMap<String, Float> idf_weights = new TreeMap<>();
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
 		try {
@@ -180,7 +212,6 @@ public class TermWeighting {
 			Reader reader = new FileReader(stopwords.getAbsolutePath());
 			StandardAnalyzer analyzer = new StandardAnalyzer(luceneVersion, reader);
 			
-
 			IndexWriterConfig config = new IndexWriterConfig(luceneVersion, analyzer);
 			IndexWriter w = new IndexWriter(index, config);
 			
@@ -194,19 +225,42 @@ public class TermWeighting {
 			
 		    //iterating through all terms in the collection
 		    LuceneDictionary ld = new LuceneDictionary( index_reader, "body" );
+		    
 		    BytesRefIterator iterator = ld.getEntryIterator();
 		    BytesRef byteRef = null;
+		    
+		    float total_idf_weight = 0;
+		    while ((byteRef = iterator.next()) != null)
+		    {
+		        String term = byteRef.utf8ToString();
+			    Term termInstance = new Term("body", term);
+			    float doc_freq = index_reader.docFreq(termInstance);
+			    float idf_weight = (float) Math.log10(N/doc_freq);
+			    total_idf_weight += idf_weight;
+			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
+			 }
+		    
+		    iterator = ld.getEntryIterator();
+		    byteRef = null;
 		    
 		    while ((byteRef = iterator.next()) != null)
 		    {
 		        String term = byteRef.utf8ToString();
-		        
 			    Term termInstance = new Term("body", term);
 			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
 			    float doc_freq = index_reader.docFreq(termInstance);
 			    df_weights.put(term, doc_freq);
 			    float idf_weight = (float) Math.log10(N/doc_freq);
-			    idf_weights.put(term, idf_weight);
+			    float normalized_idf_weight = idf_weight/total_idf_weight;
+			    try{
+			    	float query_log_score = query_log_treemap.get(term);
+		    		float query_log_tfidf_weight = normalized_idf_weight + query_log_score/10;
+		    		System.out.println(term + " found, old score: " + normalized_idf_weight + " new score: " + query_log_tfidf_weight);
+			    	df_weights.put(term, query_log_tfidf_weight);
+			    }catch(Exception e){
+			    	idf_weights.put(term, normalized_idf_weight);
+			    }
+			    
 			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
 			 }
 		    index_reader.close();
