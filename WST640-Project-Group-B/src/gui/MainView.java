@@ -112,7 +112,7 @@ public class MainView extends JFrame implements DocumentListener {
 		
 		long startTime = System.currentTimeMillis();
 		
-		luceneIndex = clustering.startLuceneIndexing();
+		luceneIndex = clustering.startLuceneIndexing(5, 10, 10);
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		System.out.println(elapsedTime / 1000 + " seconds to index");
@@ -124,12 +124,7 @@ public class MainView extends JFrame implements DocumentListener {
 	        inputString = br.readLine();
 	        System.out.println("Finding suggestions for " + inputString);
 	        get_suggestions(inputString);
-		}
-        
-        
-//		clustering.createClustersWithoutQuery();
-//		clusterIndexes = clustering.createLuceneIndexesFromClusters();
-//		
+		}        
 	}
 	
 	/*

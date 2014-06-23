@@ -33,7 +33,7 @@ public class suggestions {
 			if (Clustering.isWindows()) {
 				sub_file = new File("E:\\Dropbox\\Dataset\\user-ct-test-collection-01.txt");
 			} else if (Clustering.isMac()) {
-				sub_file = new File("E:/Dropbox/Dataset/user-ct-test-collection-01.txt");
+				sub_file = new File("/Users/wingair/Dropbox/Dataset/user-ct-test-collection-01.txt");
 			}
 			
 			StringBuilder builder = new StringBuilder();
