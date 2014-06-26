@@ -20,7 +20,7 @@ import org.apache.lucene.store.Directory;
 import query.cluster.association.TermWeighting;
 import clustering.Clustering;
 
-public class MainView extends JFrame implements DocumentListener {
+public class MainView {
 
 	JTextField searchField;
 	private static Clustering clustering;
@@ -52,53 +52,7 @@ public class MainView extends JFrame implements DocumentListener {
 	        get_suggestions(inputString);
 		}        
 	}
-	
-	public void typed()
-	{
-		/*
-		 * Get the current text from the search field and start searching for relevant documents.
-		 * When the relevant documents are retrieved, start using Carrot2 to cluster the documents
-		 * in relation to the query. 
-		 * When the clusters are found, calculate TFIDF for each term in the clusters, and show 
-		 * them to the user.
-		 */
-		String searchString = searchField.getText();
-		if (searchString.length() > 2) {
-			long startTime = System.currentTimeMillis();
-
-			ArrayList<Document> documentsResults = clustering.searchForDocuments(searchString, luceneIndex);
-			
-			long stopTime = System.currentTimeMillis();
-			long elapsedTime = stopTime - startTime;
-			System.out.println(elapsedTime + " milliseconds to search for relevant documents");
-			
-			long clusteringStartTime = System.currentTimeMillis();
-			ArrayList<ArrayList<org.apache.lucene.document.Document>> clusteringResults = clustering.startClusteringWithResults(documentsResults, searchString);
-			
-			long clusteringStopTime = System.currentTimeMillis();
-			long clusteringElapsedTime = clusteringStopTime - clusteringStartTime;
-			System.out.println(clusteringElapsedTime + " milliseconds for Carrot2 to create clusters in relation to query");
-
-			
-			long calculateTFIDFStartTime = System.currentTimeMillis();
-			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, "tf", searchString);
-			for (NavigableSet<Map.Entry<String, Float>> termCluster : termClustersList) {
-				System.out.println("******Cluster******");
-				Iterator iterator = termCluster.iterator();
-				int counter = 0;
-				while (counter < 10) {
-					Entry<String, Float> entry = (Entry<String, Float>) iterator.next();
-					System.out.println(entry);
-					counter += 1;
-				}
-			}
-			long calculateTFIDFStopTime = System.currentTimeMillis();
-			long calculateTFIDFElapsedTime = calculateTFIDFStopTime - calculateTFIDFStartTime;
-			System.out.println(calculateTFIDFElapsedTime + " milliseconds to calculate TFIDF for every term in every cluster");
-		}	  
-	}
-	
+		
 	public static void get_suggestions(String searchString){
 		//String searchString = searchField.getText();
 		if (searchString.length() > 2) {
@@ -133,29 +87,7 @@ public class MainView extends JFrame implements DocumentListener {
 			long calculateTFIDFStopTime = System.currentTimeMillis();
 			long calculateTFIDFElapsedTime = calculateTFIDFStopTime - calculateTFIDFStartTime;
 			System.out.println(calculateTFIDFElapsedTime + " milliseconds to calculate TFIDF for every term in every cluster");
-
-
-		}
-		
-	  //clustering.startClusteringWithQuery(valueTypedByUser);
-
-	  //clustering.searchClustersFromGeneratedLuceneClusters(valueTypedByUser, clusterIndexes);
-	  
-	}
-	
-	@Override
-	public void insertUpdate(javax.swing.event.DocumentEvent e) {
-		this.typed();
-	}
-
-	@Override
-	public void removeUpdate(javax.swing.event.DocumentEvent e) {
-		this.typed();
-	}
-
-	@Override
-	public void changedUpdate(javax.swing.event.DocumentEvent e) {
-		this.typed();
+		}	  
 	}
 }
 
