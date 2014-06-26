@@ -37,15 +37,15 @@ public class TermWeighting {
 	/*
 	 * The method used to determine which weighting scheme to use for the terms in the clusters.
 	 */
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString) {		
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString, Boolean queryLog) {		
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();
 		if(term_weight_type == "tfidf"){
-			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString);
+			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString, queryLog);
 		}
 		else if(term_weight_type == "df"){
 			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
 			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
-				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf", searchString, query_log_treemap);
+				TreeMap<String, Float> tf_weights = get_important_words(cluster, "df", searchString, query_log_treemap, queryLog);
 				NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
 	
 				termClustersList.add(set);
@@ -54,7 +54,7 @@ public class TermWeighting {
 		return termClustersList;
 	}
 	
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String searchString){
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String searchString, Boolean queryLog){
 		TreeMap<String, Float> idf_weights = calculate_idf_weights(clustersInLuceneDocuments);
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>(); 
 		try {
@@ -112,9 +112,13 @@ public class TermWeighting {
 				    //normalizing scores
 				    
 			        try{
-			    		float query_log_score = query_log_treemap.get(term);
-			    		//float query_log_tfidf_weight = normalized_tfidf + query_log_score/10;
-			    		float query_log_tfidf_weight = normalized_tfidf;
+			        	float query_log_tfidf_weight;
+			    		if (queryLog) {
+				    		float query_log_score = query_log_treemap.get(term);
+				    		query_log_tfidf_weight = normalized_tfidf + query_log_score/10;
+						} else {
+				    		query_log_tfidf_weight = normalized_tfidf;
+						}
 			    		//System.out.println(term + " found, old score: " + normalized_tfidf + " new score: " + query_log_tfidf_weight);
 			    		term_tfidf.put(term, query_log_tfidf_weight);
 			    	}catch(Exception e){
@@ -196,7 +200,7 @@ public class TermWeighting {
 		return term_idf;
 	}
 	
-	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type, String searchString,TreeMap<String, Float> query_log_treemap){
+	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type, String searchString,TreeMap<String, Float> query_log_treemap, Boolean queryLog){
 		
 	    TreeMap<String, Float> idf_weights = new TreeMap<>();
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
@@ -249,10 +253,14 @@ public class TermWeighting {
 			    float idf_weight = (float) Math.log10(N/doc_freq);
 			    float normalized_df_weight = doc_freq/total_df_weight;
 			    try{
-			    	float query_log_score = query_log_treemap.get(term);
-		    		float query_log_df_weight = normalized_df_weight + query_log_score/10;
-		    		//float query_log_tfidf_weight = normalized_idf_weight;
-		    		//System.out.println(term + " found, old score: " + normalized_idf_weight + " new score: " + query_log_tfidf_weight);
+		        	float query_log_df_weight;
+		    		if (queryLog) {
+				    	float query_log_score = query_log_treemap.get(term);
+			    		query_log_df_weight = normalized_df_weight + query_log_score/10;
+					} else {
+						query_log_df_weight = normalized_df_weight;
+					}
+
 			    	df_weights.put(term, query_log_df_weight);
 			    }catch(Exception e){
 			    	df_weights.put(term, normalized_df_weight);

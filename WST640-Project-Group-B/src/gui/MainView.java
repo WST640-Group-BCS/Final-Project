@@ -44,11 +44,15 @@ public class MainView {
 	        System.out.print("Enter search query\nPress enter for suggestions: ");
 	        inputString = br.readLine();
 	        System.out.println("Finding suggestions for " + inputString);
-	        get_suggestions(inputString, "df");
+	        /*
+	         * Get suggestions for word, the parameters are, the query string, the weighting
+	         * scheme, and to include query log or not in the score.
+	         */
+	        get_suggestions(inputString, "df", true);
 		}        
 	}
 		
-	public static void get_suggestions(String searchString, String weightingScheme){
+	public static void get_suggestions(String searchString, String weightingScheme, Boolean queryLog){
 		
 		
 		if (searchString.length() > 2) {
@@ -78,7 +82,7 @@ public class MainView {
 			 */
 			long calculateTFIDFStartTime = System.currentTimeMillis();
 			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, weightingScheme, searchString);
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, weightingScheme, searchString, queryLog);
 			
 			/*
 			 * Show each cluster with the term and the score of the term.
