@@ -5,18 +5,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
@@ -31,19 +27,16 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 
 import querylogs.suggestions;
 
 
 public class TermWeighting {
 	static Version luceneVersion = Version.LUCENE_46;
-	
-	public int calculateDocumentScoreAccordingToQuery(String query, String documentTitle)
-	{
-		return 0;
-	}
-	
+		
+	/*
+	 * The method used to determine which weighting scheme to use for the terms in the clusters.
+	 */
 	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString) {		
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();
 		if(term_weight_type == "tfidf"){

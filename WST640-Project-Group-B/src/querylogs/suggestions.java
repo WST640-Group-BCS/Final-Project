@@ -20,10 +20,7 @@ public class suggestions {
 		// TODO Auto-generated method stub
 		String test = "benjamin bling";
 		getSuggestions(test);
-		
 	}
-	
-	
 	
 	public static TreeMap<String, Float> getSuggestions(String query){
 		TreeMap<String, Float> word_counts = new TreeMap<String, Float>();
