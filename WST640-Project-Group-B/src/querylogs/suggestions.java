@@ -16,31 +16,29 @@ import clustering.Clustering;
 
 public class suggestions {
 	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		String test = "benjamin bling";
-		getSuggestions(test);
-	}
+	/*
+	 * Method for returning suggestions based on a query. Suggestions found from a query log file
+	 */
 	
 	public static TreeMap<String, Float> getSuggestions(String query){
 		TreeMap<String, Float> word_counts = new TreeMap<String, Float>();
 		try{
-			String path_to_trec = "";
 			File sub_file = null;
+			//get path of the query log collection
 			if (Clustering.isWindows()) {
 				sub_file = new File("E:\\Dropbox\\Dataset\\user-ct-test-collection-01.txt");
 			} else if (Clustering.isMac()) {
 				sub_file = new File("/Users/wingair/Dropbox/Dataset/user-ct-test-collection-01.txt");
 			}
 			
-			StringBuilder builder = new StringBuilder();
-			//BufferedReader in = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(sub_file.getAbsolutePath()))));
 			BufferedReader in = new BufferedReader(new FileReader(sub_file.getAbsolutePath()));
 			String content;
-			//System.out.println(new File(path_to_trec + symbol + wtx_folder + symbol + sub_directory).getName() + ":");
+			//split the query by space
 			String[] splited_query = query.split("\\s+");
 			String regex = "";
 			int counter = 0;
+			
+			//create the regex looking for the individual terms of the query
 			for (String token:splited_query){
 				if(counter == 0){
 					regex = "(.*)" + token + "(.*)";
@@ -53,6 +51,7 @@ public class suggestions {
 			
 			String prev_query_log = "";
 			String query_log_string = "";
+			//read every line in the query log file
 			while ((content = in.readLine()) != null) {
 				//get the lines that contain the query tokens
 				if(content.matches(regex)){
@@ -60,7 +59,6 @@ public class suggestions {
 					query_log_string = content.split("\\t+")[1];
 					//make sure all entries are new entries
 					if(!query_log_string.equals(prev_query_log)){
-						//System.out.println("content " + query_log_string + " prevlog: " + prev_query_log + " boolean: " + (!query_log_string.equals(prev_query_log)));
 						String[] query_log_tokens = query_log_string.split("\\s+");
 						for(String token: query_log_tokens){
 							//avoid the tokens that the query consists of
@@ -77,45 +75,30 @@ public class suggestions {
 				}
 				
 				prev_query_log = query_log_string;
-				//builder.append(content);
 			}
-			
-			System.out.println(entriesSortedByValues(word_counts));
-			String sub_file_text = builder.toString();
-			
 			in.close();
 		}catch(Exception e){
 			System.out.println(e);
 		}
 		
-		//System.out.println("original: " + word_counts.get("franklin") + " normalized: " + normalize_treemap(word_counts).get("franklin"));
-		
+		//return normalized query log scores
 		return normalize_treemap(word_counts);
 	}
 	
+	/*
+	 * Method for normalizing the query log scores
+	 */
 	public static TreeMap<String, Float> normalize_treemap(TreeMap<String, Float> treemap){
 		float total_weight = 0;
+		//get total value of all tokens found in the query log
 		for(Map.Entry<String,Float> entry : treemap.entrySet()) {
 			total_weight += entry.getValue();
 		}
+		//calculate individual token score
 		for(Map.Entry<String,Float> entry : treemap.entrySet()) {
 			entry.setValue(entry.getValue()/total_weight);
 		}
 		
 		return treemap;
 	}
-	
-	static <K,V extends Comparable<? super V>> NavigableSet<Map.Entry<K,V>> entriesSortedByValues(Map<K,V> map) {
-		NavigableSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
-            new Comparator<Map.Entry<K,V>>() {
-                @Override public int compare(Map.Entry<K,V> e2, Map.Entry<K,V> e1) {
-                    int res = e1.getValue().compareTo(e2.getValue());
-                    return res != 0 ? res : 1; // Special fix to preserve items with equal values
-                }
-            }
-        );
-        sortedEntries.addAll(map.entrySet());
-        return sortedEntries;
-    }
-
 }
