@@ -42,7 +42,7 @@ public class TermWeighting {
 		if(term_weight_type == "tfidf"){
 			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString);
 		}
-		else if(term_weight_type == "tf"){
+		else if(term_weight_type == "df"){
 			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
 			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
 				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf", searchString, query_log_treemap);
@@ -266,7 +266,7 @@ public class TermWeighting {
 		}
 		if(weight_type == "idf"){
 			return idf_weights;
-		}else if (weight_type == "tf") {
+		}else if (weight_type == "df") {
 			return df_weights;
 		}
 		return null;
