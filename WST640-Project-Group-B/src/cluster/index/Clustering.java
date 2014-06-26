@@ -9,7 +9,7 @@
  * in the root folder of the repository checkout or at:
  * http://www.carrot2.org/carrot2.LICENSE
  */
-package clustering;
+package cluster.index;
 
 
 import java.io.BufferedReader;

@@ -12,7 +12,8 @@ import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.zip.GZIPInputStream;
-import clustering.Clustering;
+
+import cluster.index.Clustering;
 
 public class suggestions {
 	
@@ -98,7 +99,6 @@ public class suggestions {
 		for(Map.Entry<String,Float> entry : treemap.entrySet()) {
 			entry.setValue(entry.getValue()/total_weight);
 		}
-		
 		return treemap;
 	}
 }

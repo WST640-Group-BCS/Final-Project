@@ -1,4 +1,5 @@
-package gui;
+package main.control;
+
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -13,8 +14,8 @@ import javax.swing.JTextField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.store.Directory;
 
-import query.cluster.association.TermWeighting;
-import clustering.Clustering;
+import term.weighting.TermWeighting;
+import cluster.index.Clustering;
 
 public class MainView {
 
