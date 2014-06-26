@@ -50,8 +50,9 @@ public class TermWeighting {
 			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString);
 		}
 		else if(term_weight_type == "tf"){
+			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
 			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
-				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf", searchString);
+				TreeMap<String, Float> tf_weights = get_important_words(cluster, "tf", searchString, query_log_treemap);
 				NavigableSet<Map.Entry<String, Float>> set = entriesSortedByValues(tf_weights);
 	
 				termClustersList.add(set);
@@ -119,8 +120,9 @@ public class TermWeighting {
 				    
 			        try{
 			    		float query_log_score = query_log_treemap.get(term);
-			    		float query_log_tfidf_weight = normalized_tfidf + query_log_score/10;
-			    		System.out.println(term + " found, old score: " + normalized_tfidf + " new score: " + query_log_tfidf_weight);
+			    		//float query_log_tfidf_weight = normalized_tfidf + query_log_score/10;
+			    		float query_log_tfidf_weight = normalized_tfidf;
+			    		//System.out.println(term + " found, old score: " + normalized_tfidf + " new score: " + query_log_tfidf_weight);
 			    		term_tfidf.put(term, query_log_tfidf_weight);
 			    	}catch(Exception e){
 			    		//System.out.println(term + " not found");
@@ -201,8 +203,8 @@ public class TermWeighting {
 		return term_idf;
 	}
 	
-	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type, String searchString){
-		TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
+	public TreeMap<String, Float> get_important_words(ArrayList<Document> documents, String weight_type, String searchString,TreeMap<String, Float> query_log_treemap){
+		
 	    TreeMap<String, Float> idf_weights = new TreeMap<>();
 	    TreeMap<String, Float> df_weights = new TreeMap<>();
 		try {
@@ -229,16 +231,17 @@ public class TermWeighting {
 		    BytesRefIterator iterator = ld.getEntryIterator();
 		    BytesRef byteRef = null;
 		    
-		    float total_idf_weight = 0;
+		    float total_df_weight = 0;
 		    while ((byteRef = iterator.next()) != null)
 		    {
 		        String term = byteRef.utf8ToString();
 			    Term termInstance = new Term("body", term);
 			    float doc_freq = index_reader.docFreq(termInstance);
-			    float idf_weight = (float) Math.log10(N/doc_freq);
-			    total_idf_weight += idf_weight;
+			    //float idf_weight = (float) Math.log10(N/doc_freq);
+			    total_df_weight += doc_freq;
 			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
 			 }
+		    System.out.println(total_df_weight);
 		    
 		    iterator = ld.getEntryIterator();
 		    byteRef = null;
@@ -249,16 +252,17 @@ public class TermWeighting {
 			    Term termInstance = new Term("body", term);
 			    long total_term_Freq = index_reader.totalTermFreq(termInstance);
 			    float doc_freq = index_reader.docFreq(termInstance);
-			    df_weights.put(term, doc_freq);
+			    //df_weights.put(term, doc_freq);
 			    float idf_weight = (float) Math.log10(N/doc_freq);
-			    float normalized_idf_weight = idf_weight/total_idf_weight;
+			    float normalized_df_weight = doc_freq/total_df_weight;
 			    try{
 			    	float query_log_score = query_log_treemap.get(term);
-		    		float query_log_tfidf_weight = normalized_idf_weight + query_log_score/10;
-		    		System.out.println(term + " found, old score: " + normalized_idf_weight + " new score: " + query_log_tfidf_weight);
-			    	df_weights.put(term, query_log_tfidf_weight);
+		    		float query_log_df_weight = normalized_df_weight + query_log_score/10;
+		    		//float query_log_tfidf_weight = normalized_idf_weight;
+		    		//System.out.println(term + " found, old score: " + normalized_idf_weight + " new score: " + query_log_tfidf_weight);
+			    	df_weights.put(term, query_log_df_weight);
 			    }catch(Exception e){
-			    	idf_weights.put(term, normalized_idf_weight);
+			    	df_weights.put(term, normalized_df_weight);
 			    }
 			    
 			    //System.out.println("term: " + term + ". Total occ: " + total_term_Freq + ". Doc freq: " +  doc_freq + ". idf: " + idf_weight);  
