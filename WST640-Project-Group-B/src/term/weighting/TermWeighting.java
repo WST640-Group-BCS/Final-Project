@@ -37,14 +37,14 @@ public class TermWeighting {
 	/*
 	 * The method used to determine which weighting scheme to use for the terms in the clusters.
 	 */
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString, Boolean queryLog) {		
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculateTFIDFForClusters(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String term_weight_type, String searchString, Boolean queryLog, String queryLogPath) {		
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>();
 		if(term_weight_type == "tfidf"){
-			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString, queryLog);
+			termClustersList = calculate_tfidf(clustersInLuceneDocuments, searchString, queryLog, queryLogPath);
 		}
 		else if(term_weight_type == "df"){
-			//Get all suggestions from the quer log
-			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
+			//Get all suggestions from the query log
+			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString, queryLogPath);
 			//run through every found cluster
 			for (ArrayList<Document> cluster : clustersInLuceneDocuments) {
 				TreeMap<String, Float> tf_weights = get_important_words(cluster, "df", searchString, query_log_treemap, queryLog);
@@ -60,14 +60,14 @@ public class TermWeighting {
 	/*
 	 * Method that takes the documents of all clusters and finds the tokens with highest tfidf value together with query log weighting
 	 */
-	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String searchString, Boolean queryLog){
+	public ArrayList<NavigableSet<Map.Entry<String, Float>>> calculate_tfidf(ArrayList<ArrayList<org.apache.lucene.document.Document>> clustersInLuceneDocuments, String searchString, Boolean queryLog, String queryLogPath){
 		//Get the idf weights of all tokens
 		TreeMap<String, Float> idf_weights = calculate_idf_weights(clustersInLuceneDocuments);
 		ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = new ArrayList<NavigableSet<Map.Entry<String, Float>>>(); 
 		try {
 			System.out.println("-- analyzing query logs --");
 			//get token weight from query log
-			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString);
+			TreeMap<String, Float> query_log_treemap = suggestions.getSuggestions(searchString, queryLogPath);
 			//run through all found cluster
 			for(ArrayList<org.apache.lucene.document.Document> cluster: clustersInLuceneDocuments){
 				//Calculating idf weights

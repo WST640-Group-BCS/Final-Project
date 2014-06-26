@@ -21,16 +21,16 @@ public class suggestions {
 	 * Method for returning suggestions based on a query. Suggestions found from a query log file
 	 */
 	
-	public static TreeMap<String, Float> getSuggestions(String query){
+	public static TreeMap<String, Float> getSuggestions(String query, String queryLogPath){
 		TreeMap<String, Float> word_counts = new TreeMap<String, Float>();
 		try{
-			File sub_file = null;
+			File sub_file = new File(queryLogPath);
 			//get path of the query log collection
-			if (Clustering.isWindows()) {
-				sub_file = new File("E:\\Dropbox\\Dataset\\user-ct-test-collection-01.txt");
-			} else if (Clustering.isMac()) {
-				sub_file = new File("/Users/wingair/Dropbox/Dataset/user-ct-test-collection-01.txt");
-			}
+//			if (Clustering.isWindows()) {
+//				sub_file = new File("E:\\Dropbox\\Dataset\\user-ct-test-collection-01.txt");
+//			} else if (Clustering.isMac()) {
+//				sub_file = new File("/Users/wingair/Dropbox/Dataset/user-ct-test-collection-01.txt");
+//			}
 			
 			BufferedReader in = new BufferedReader(new FileReader(sub_file.getAbsolutePath()));
 			String content;

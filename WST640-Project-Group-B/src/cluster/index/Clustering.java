@@ -79,19 +79,20 @@ public class Clustering
 	public Directory startLuceneIndexing(
 			int numberOfFoldersToUse, 
 			int numberOfFilesToIndex,
-			int numberOfDOCTagsToIndexInONEFile) throws FileNotFoundException, IOException
+			int numberOfDOCTagsToIndexInONEFile, 
+			String TRECPath) throws FileNotFoundException, IOException
 	{
         this.documents = new ArrayList<Document>();
         
         /*
          * Path to the Trec Files, make sure to change these to the correct path.
          */
-        String path_to_trec = "";
-		if (isWindows()) {
-			path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
-		} else if (isMac()) {
-			path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
-		}
+        String path_to_trec = TRECPath;
+//		if (isWindows()) {
+//			path_to_trec = "E:\\Dropbox\\Dataset\\WT10G";	
+//		} else if (isMac()) {
+//			path_to_trec = "/Users/wingair/Dropbox/Dataset/WT10G/";	
+//		}
 		
 		/*
 		 * Use the correct symbol according to the OS.

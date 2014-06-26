@@ -23,7 +23,30 @@ public class MainView {
 	private static Clustering clustering;
 	private static Directory luceneIndex;
 	
-	public static void main(String[] args) throws FileNotFoundException, IOException {		
+	public static void main(String[] args) throws FileNotFoundException, IOException {	
+		
+		/*
+		 * Parameters you can change.
+		 */
+		
+		//***************************************************
+		//ONLY USE THE EXAMPLE PATHS BELOW THAT MATCH YOUR OS 
+		//AND MAKE SURE IT MATCHES THE FILES ON YOUR OWN DISK
+		//***************************************************
+		//WINDOWS EXAMPLE PATHS
+		String TRECPath = "E:\\Dropbox\\Dataset\\WT10G";
+		String queryLogPath = "E:\\Dropbox\\Dataset\\user-ct-test-collection-01.txt";
+		//MAC EXAMPLE PATHS
+		//String TRECPath = "/Users/wingair/Dropbox/Dataset/WT10G/";
+		//String queryLogPath = "/Users/wingair/Dropbox/Dataset/user-ct-test-collection-01.txt";
+
+		int numberOfFoldersToIndex = 20;
+		int numberOfFilesToIndex = 25;
+		int numberOfDOCTagsToIndex = 20;
+
+		String weightingScheme = "df";
+		Boolean includeQueryLog = true;
+		
 		/*
 		 * Create a new Clustering object and start the lucene indexing. 
 		 */
@@ -31,7 +54,7 @@ public class MainView {
 		
 		long startTime = System.currentTimeMillis();
 		
-		luceneIndex = clustering.startLuceneIndexing(5, 10, 10);
+		luceneIndex = clustering.startLuceneIndexing(numberOfFoldersToIndex, numberOfFilesToIndex, numberOfDOCTagsToIndex, TRECPath);
 		long stopTime = System.currentTimeMillis();
 		long elapsedTime = stopTime - startTime;
 		System.out.println(elapsedTime / 1000 + " seconds to index");
@@ -49,11 +72,11 @@ public class MainView {
 	         * Get suggestions for word, the parameters are, the query string, the weighting
 	         * scheme, and to include query log or not in the score.
 	         */
-	        get_suggestions(inputString, "df", true);
+	        get_suggestions(inputString, weightingScheme, includeQueryLog, queryLogPath);
 		}        
 	}
 		
-	public static void get_suggestions(String searchString, String weightingScheme, Boolean queryLog){
+	public static void get_suggestions(String searchString, String weightingScheme, Boolean includeQueryLog, String queryLogPath){
 		
 		
 		if (searchString.length() > 2) {
@@ -83,7 +106,7 @@ public class MainView {
 			 */
 			long calculateTFIDFStartTime = System.currentTimeMillis();
 			TermWeighting termWeighting = new TermWeighting();
-			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, weightingScheme, searchString, queryLog);
+			ArrayList<NavigableSet<Map.Entry<String, Float>>> termClustersList = termWeighting.calculateTFIDFForClusters(clusteringResults, weightingScheme, searchString, includeQueryLog, queryLogPath);
 			
 			/*
 			 * Show each cluster with the term and the score of the term.
